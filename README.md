@@ -26,7 +26,7 @@ Follow these steps to get the bot running:
 - Install the required dependencies: `pip install -r requirements.txt`
 - Run the bot: `python index.py`
 
-   
+If everything is done correctly, your bot is ready to go. Just write the test command “help” to the number connected to the API from another number.   
 For more detailed instructions on setup and configuration, you can watch our tutorial video on [YouTube](https://youtu.be/GhsRJBXztoc).
 
 ***
