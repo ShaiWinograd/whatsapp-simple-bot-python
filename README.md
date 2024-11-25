@@ -19,6 +19,12 @@ Follow these steps to set up and run the bot:
 3. Run `./ngrok http PORT_NUMBER`, replacing `PORT_NUMBER` with the port your Express server is running on locally.
 Now you should have a public URL that you can use as a URL for your webhook.
    - Set your webhook URL in the **channel settings** on the Whapi.Cloud dashboard.
+  
+3. **Setting Up Your Bot**
+Follow these steps to get the bot running:
+- Navigate to the directory containing the bot’s files: `cd /path/to/bot`
+- Install the required dependencies: `pip install -r requirements.txt`
+- Run the bot: `python index.py`
 
    
 For more detailed instructions on setup and configuration, you can watch our tutorial video on [YouTube](https://youtu.be/GhsRJBXztoc).
