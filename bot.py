@@ -13,7 +13,7 @@ def send_whapi_request(payload):
     headers = {
         "accept": "application/json",
         "content-type": "application/json",
-        "authorization": "Bearer btXyoyEQ29ip7dCbk2LZdjSgdoDGd8Hw"
+        "authorization": "Bearer ***"
     }
 
     response = requests.post(url, json=payload, headers=headers)

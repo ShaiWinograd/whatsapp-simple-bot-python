@@ -39,22 +39,3 @@ class MediaMessagePayload(BaseWebhookPayload):
             }
         })
         return {k: v for k, v in payload.items() if v is not None}
-
-@dataclass
-class LocationMessagePayload(BaseWebhookPayload):
-    """Payload for location messages."""
-    latitude: float
-    longitude: float
-    name: Optional[str] = field(default=None)
-    address: Optional[str] = field(default=None)
-
-    def to_dict(self) -> Dict[str, Any]:
-        payload = super().to_dict()
-        location_data = {
-            "latitude": self.latitude,
-            "longitude": self.longitude,
-            "name": self.name,
-            "address": self.address
-        }
-        payload["location"] = {k: v for k, v in location_data.items() if v is not None}
-        return payload
