@@ -1,55 +1,65 @@
-# Simple WhatsApp Bot in Python for Beginners
+# WhatsApp Simple Bot Python
 
-This repository contains a basic WhatsApp bot written in Python, ideal for developers who are just starting out. The bot responds to various commands with text messages and images. With straightforward setup steps and detailed comments in the code, this bot is designed to help beginners understand API integration with WhatsApp.
+A modular WhatsApp bot built with Python, using the WhatsApp Cloud API.
 
-## Getting Started
+## Project Structure
 
-Follow these steps to set up and run the bot:
+```
+whatsapp-simple-bot-python/
+├── src/                    # Source code
+│   ├── config/            # Configuration files
+│   │   ├── __init__.py
+│   │   └── responses.py   # Message responses and API config
+│   ├── utils/             # Utility functions
+│   │   ├── __init__.py
+│   │   ├── validators.py  # Message validation
+│   │   └── whatsapp_client.py  # WhatsApp API client
+│   ├── __init__.py
+│   └── message_handler.py # Core message processing logic
+├── app.py                 # Flask application entry point
+├── webhook_payload.py     # Webhook payload models
+└── requirements.txt       # Project dependencies
+```
 
-### Prerequisites
+## Setup
 
-1. **Get Your API Token**
-   - Obtain an API token from [Whapi.Cloud](https://whapi.cloud) and place it in `.env`.
+1. Install dependencies:
+```bash
+pip install -r requirements.txt
+```
 
-2. **Set Up Webhook URL**
-   - Get a webhook URL to receive incoming messages. If you need help with setting up the webhook, refer to our knowledge base article [Where to Find the Webhook URL](https://support.whapi.cloud/help-desk/receiving/webhooks/where-to-find-the-webhook-url).
-   - We recommend using a local environment for testing, such as **NGROK**, to expose a local server to the internet.
-1. **Download Ngrok** from the official website and extract it.
-2. Open the terminal and navigate to the folder where Ngrok is stored.
-3. Run `./ngrok http PORT_NUMBER`, replacing `PORT_NUMBER` with the port your Express server is running on locally.
-Now you should have a public URL that you can use as a URL for your webhook.
-   - Set your webhook URL in the **channel settings** on the Whapi.Cloud dashboard.
-  
-3. **Setting Up Your Bot**
-Follow these steps to get the bot running:
-- Navigate to the directory containing the bot’s files: `cd /path/to/bot`
-- Install the required dependencies: `pip install -r requirements.txt`
-- Run the bot: `python index.py`
+2. Create a `.env` file with your configuration:
+```env
+PORT=5000
+```
 
-If everything is done correctly, your bot is ready to go. Just write the test command “help” to the number connected to the API from another number.   
-For more detailed instructions on setup and configuration, you can watch our tutorial video on [YouTube](https://youtu.be/GhsRJBXztoc).
+3. Run the application:
+```bash
+python app.py
+```
 
-***
+The bot will start running on `http://localhost:5000`.
 
-## Script Overview
+## Features
 
-This bot's script contains helpful comments throughout, making it easy to understand the flow and how each function works. Here's a breakdown of the main parts:
+- Modular and maintainable code structure
+- Early message validation to improve efficiency
+- Configurable message responses
+- Robust error handling
+- Webhook endpoint for WhatsApp Cloud API integration
 
-- **`files/`**: Stores media files, such as images, that the bot sends.
-- **`.env`**: Contains configuration variables like the API token and base URL.
-- **`index.py`**: The main Python script where the bot’s logic resides.
-- **`requirements.txt`**: Lists all necessary Python packages.
+## Webhook Configuration
 
-### Main Logic
+The webhook endpoint is `/hook`. When configuring your WhatsApp Cloud API webhook, use:
+```
+https://your-domain.com/hook
+```
 
-This is where the primary logic of the bot resides. It:
-- Filters incoming messages (only non-outgoing messages are processed).
-- Extracts the sender's phone number and the text content of the message.
-- Uses a switch statement to respond with different messages or images based on the command received.
+## Message Processing Flow
 
-### Additional Information
+1. Webhook receives incoming message
+2. Validator checks if message should be processed
+3. Message handler determines appropriate response
+4. WhatsApp client sends response back to user
 
-Each function is commented to make it easier for beginners to understand how the bot works step by step. Should you have any questions or need further assistance, our support team is available and ready to help.
-
-Happy coding!
-
+Each step is handled by a dedicated module for better maintainability and testability.

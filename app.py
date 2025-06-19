@@ -1,7 +1,8 @@
 from flask import Flask, request, jsonify
 import os
 from dotenv import load_dotenv
-from bot import process_message, send_whapi_request
+from src.message_handler import process_message
+from src.utils.whatsapp_client import send_whapi_request
 
 load_dotenv()  # Load environment variables from a .env file
 
