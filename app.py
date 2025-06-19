@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify
 import os
 from dotenv import load_dotenv
 from src.message_handler import process_message
-from src.utils.whatsapp_client import send_whapi_request
+from src.utils.whatsapp_client import WhatsAppClient
 
 load_dotenv()  # Load environment variables from a .env file
 
@@ -31,7 +31,7 @@ def handle_new_messages():
                     # Send each response in the list
                     for payload in payloads:
                         print(f"Full payload: {payload}\n")  # Log complete payload
-                        response = send_whapi_request(payload)
+                        response = WhatsAppClient.send_message(payload)
                         print(f"API Response: {response}\n")
                 except Exception as e:
                     print(f"Error sending message: {str(e)}\n")

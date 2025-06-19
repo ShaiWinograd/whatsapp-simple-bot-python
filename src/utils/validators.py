@@ -12,7 +12,7 @@ def validate_sender(message):
         bool: True if message should be processed, False otherwise
     """
     # If it's our own message or a message status update, ignore it
-    if message.get('fromMe') or message.get('event', {}).get('type') == 'statuses':
+    if message.get('from_me') or message.get('event', {}).get('type') == 'statuses':
         return False
         
     # For incoming messages, validate the sender

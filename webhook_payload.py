@@ -59,13 +59,13 @@ class InteractiveMessagePayload(BaseWebhookPayload):
         payload.update({
             "type": "button",
             "header": {
-                "text": "תפריט אפשרויות"
+                "text": "השירותים שלנו"
             },
             "body": {
                 "text": self.body
             },
             "footer": {
-                "text": "בחר/י מהאפשרויות הבאות"
+                "text": "בחר.י אחת מהאפרויות על מנת להתקדם"
             },
             "action": {
                 "buttons": buttons
