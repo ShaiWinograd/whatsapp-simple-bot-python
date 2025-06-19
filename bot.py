@@ -1,4 +1,5 @@
 import requests
+from webhook_payload import TextMessagePayload
 
 # Define responses for specific commands
 RESPONSES = {
@@ -12,7 +13,7 @@ def send_whapi_request(payload):
     headers = {
         "accept": "application/json",
         "content-type": "application/json",
-        "authorization": "Bearer ***"
+        "authorization": "Bearer btXyoyEQ29ip7dCbk2LZdjSgdoDGd8Hw"
     }
 
     response = requests.post(url, json=payload, headers=headers)
@@ -47,11 +48,9 @@ def process_message(message):
 
     command_type = message.get('type', '').strip().lower()
     
-    # Initialize payload with the specific number we're testing with
-    payload = {
-        "typing_time": 0,
+    # Create a base payload object for the specific number we're testing with
+    base_payload = {
         "to": "972546626125",
-        "body": ""  # will be set based on the message
     }
 
     print(f"Received message type: {command_type}\n")
@@ -62,9 +61,12 @@ def process_message(message):
         
         # Determine the response based on the command
         if command_text == 'היי אמא':
-            payload['body'] = RESPONSES['היי אמא']
+            return TextMessagePayload(
+                to=base_payload["to"],
+                body=RESPONSES['היי אמא']
+            ).to_dict()
         else:
             print(f"Unknown command received: {command_text}. No response sent.\n")
             return None
 
-    return payload
+    return None
