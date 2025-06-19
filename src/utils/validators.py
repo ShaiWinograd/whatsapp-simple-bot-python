@@ -11,16 +11,16 @@ def validate_sender(message):
     Returns:
         bool: True if message should be processed, False otherwise
     """
+    # If it's our own message or a message status update, ignore it
+    if message.get('fromMe') or message.get('event', {}).get('type') == 'statuses':
+        return False
+        
+    # For incoming messages, validate the sender
     sender_number = message.get('from', '').strip()
     print(f"Message from number: {sender_number}\n")
 
-    # Only process messages from the specific number
     if sender_number != DEBUG_PHONE_NUMBER:
         print(f"Skipping message from {sender_number} - not the debug number\n")
-        return False
-
-    # Ignore messages from the bot itself
-    if message.get('fromMe'):
         return False
 
     return True

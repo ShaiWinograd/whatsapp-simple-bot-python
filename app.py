@@ -25,13 +25,14 @@ def handle_new_messages():
             
         for message in messages:
             # Process the message and get response payload
-            payload = process_message(message)
-            if payload:
+            payloads = process_message(message)
+            if payloads:
                 try:
-                    # Send the response
-                    print(f"Full payload: {payload}\n")  # Log complete payload
-                    response = send_whapi_request(payload)
-                    print(f"API Response: {response}\n")
+                    # Send each response in the list
+                    for payload in payloads:
+                        print(f"Full payload: {payload}\n")  # Log complete payload
+                        response = send_whapi_request(payload)
+                        print(f"API Response: {response}\n")
                 except Exception as e:
                     print(f"Error sending message: {str(e)}\n")
                     raise

@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 
 @dataclass
 class BaseWebhookPayload:
@@ -39,3 +39,36 @@ class MediaMessagePayload(BaseWebhookPayload):
             }
         })
         return {k: v for k, v in payload.items() if v is not None}
+
+@dataclass
+class InteractiveMessagePayload(BaseWebhookPayload):
+    """Payload for interactive messages with buttons."""
+    body: str
+    button_messages: List[str]
+
+    def to_dict(self) -> Dict[str, Any]:
+        payload = super().to_dict()
+        buttons = []
+        for i, msg in enumerate(self.button_messages):
+            buttons.append({
+                "type": "quick_reply",
+                "title": msg,
+                "id": str(i)
+            })
+
+        payload.update({
+            "type": "button",
+            "header": {
+                "text": "תפריט אפשרויות"
+            },
+            "body": {
+                "text": self.body
+            },
+            "footer": {
+                "text": "בחר/י מהאפשרויות הבאות"
+            },
+            "action": {
+                "buttons": buttons
+            }
+        })
+        return payload
