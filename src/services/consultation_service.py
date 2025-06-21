@@ -3,6 +3,7 @@ from typing import List, Dict, Any
 
 from webhook_payload import InteractiveMessagePayload
 from src.services.base_service import BaseConversationService
+from src.config.responses import SERVICE_RESPONSES, GENERAL_RESPONSES
 
 
 class ConsultationService(BaseConversationService):
@@ -19,20 +20,14 @@ class ConsultationService(BaseConversationService):
             List[Dict[str, Any]]: List of message payloads to send
         """
         self.set_conversation_state("awaiting_consultation_topic")
+        responses = SERVICE_RESPONSES['consultation']['initial']
         
-        welcome_msg = self.create_text_message(
-            "אשמח לקיים איתך שיחת ייעוץ! על מה היית רוצה לדבר?"
-        )
+        welcome_msg = self.create_text_message(responses['welcome'])
         
         options_msg = InteractiveMessagePayload(
             to=self.recipient,
-            body="בחר/י נושא:",
-            button_messages=[
-                "תכנון מעבר דירה",
-                "ארגון הבית",
-                "עיצוב הבית",
-                "אחר"
-            ]
+            body=responses['options']['title'],
+            button_messages=responses['options']['buttons']
         ).to_dict()
         
         return [welcome_msg, options_msg]
@@ -40,59 +35,44 @@ class ConsultationService(BaseConversationService):
     def handle_response(self, message: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Handle user response based on current conversation state."""
         current_state = self.get_conversation_state()
+        responses = SERVICE_RESPONSES['consultation']
         
         if current_state == "awaiting_consultation_topic":
             response = message.get('interactive', {}).get('button_reply', {}).get('id', '')
-            
             self.set_conversation_state("awaiting_questions")
             
             questions_msg = self.create_text_message(
-                "האם יש שאלות ספציפיות שהיית רוצה שנדבר עליהן בשיחה?"
+                responses['awaiting_questions']['question']
             )
             return [questions_msg]
             
         elif current_state == "awaiting_questions":
-            # After getting questions, ask about preferred consultation type
             self.set_conversation_state("awaiting_consultation_type")
+            consultation_responses = responses['awaiting_consultation_type']
             
-            type_msg = self.create_text_message(
-                "איך היית מעדיף/ה לקיים את הפגישה?"
-            )
+            type_msg = self.create_text_message(consultation_responses['question'])
             
             options_msg = InteractiveMessagePayload(
                 to=self.recipient,
-                body="בחר/י:",
-                button_messages=[
-                    "פגישה פרונטלית",
-                    "שיחת וידאו",
-                    "שיחת טלפון"
-                ]
+                body=consultation_responses['options']['title'],
+                button_messages=consultation_responses['options']['buttons']
             ).to_dict()
             
             return [type_msg, options_msg]
             
         elif current_state == "awaiting_consultation_type":
-            # Final message to schedule
             self.set_conversation_state("completed")
+            completion_responses = responses['completed']
             
-            final_msg = self.create_text_message(
-                "מעולה! אשמח לקבוע איתך את שיחת הייעוץ. "
-                "פגישת ייעוץ ראשונית היא ללא עלות ונמשכת כ-45 דקות."
-            )
+            final_msg = self.create_text_message(completion_responses['final'])
             
             schedule_msg = InteractiveMessagePayload(
                 to=self.recipient,
-                body="מתי נוח לך?",
-                button_messages=[
-                    "בימי ראשון-שלישי",
-                    "בימי רביעי-חמישי",
-                    "ביום שישי"
-                ]
+                body=completion_responses['schedule']['title'],
+                button_messages=completion_responses['schedule']['buttons']
             ).to_dict()
             
             return [final_msg, schedule_msg]
             
         # Default response if state is unknown
-        return [self.create_text_message(
-            "מצטערת, לא הבנתי. האם תוכל/י לנסח מחדש?"
-        )]
+        return [self.create_text_message(GENERAL_RESPONSES['error'])]

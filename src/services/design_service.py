@@ -3,6 +3,7 @@ from typing import List, Dict, Any
 
 from webhook_payload import InteractiveMessagePayload
 from src.services.base_service import BaseConversationService
+from src.config.responses import SERVICE_RESPONSES, GENERAL_RESPONSES
 
 
 class DesignService(BaseConversationService):
@@ -19,20 +20,14 @@ class DesignService(BaseConversationService):
             List[Dict[str, Any]]: List of message payloads to send
         """
         self.set_conversation_state("awaiting_project_type")
+        responses = SERVICE_RESPONSES['design']['initial']
         
-        welcome_msg = self.create_text_message(
-            "אשמח לעזור לך לעצב את הבית! איזה סוג של פרויקט מעניין אותך?"
-        )
+        welcome_msg = self.create_text_message(responses['welcome'])
         
         options_msg = InteractiveMessagePayload(
             to=self.recipient,
-            body="בחר/י מהאפשרויות:",
-            button_messages=[
-                "עיצוב דירה שלמה",
-                "עיצוב חדר ספציפי",
-                "ייעוץ צבע וטקסטיל",
-                "סטיילינג ואבזור"
-            ]
+            body=responses['options']['title'],
+            button_messages=responses['options']['buttons']
         ).to_dict()
         
         return [welcome_msg, options_msg]
@@ -40,69 +35,50 @@ class DesignService(BaseConversationService):
     def handle_response(self, message: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Handle user response based on current conversation state."""
         current_state = self.get_conversation_state()
+        responses = SERVICE_RESPONSES['design']
         
         if current_state == "awaiting_project_type":
             response = message.get('interactive', {}).get('button_reply', {}).get('id', '')
-            
             self.set_conversation_state("awaiting_style_preference")
             
-            style_msg = self.create_text_message(
-                "איזה סגנון עיצובי מדבר אליך?"
-            )
+            style_responses = responses['awaiting_style_preference']
+            style_msg = self.create_text_message(style_responses['question'])
             
             options_msg = InteractiveMessagePayload(
                 to=self.recipient,
-                body="בחר/י:",
-                button_messages=[
-                    "מודרני ונקי",
-                    "חמים וביתי",
-                    "סקנדינבי",
-                    "אקלקטי"
-                ]
+                body=style_responses['options']['title'],
+                button_messages=style_responses['options']['buttons']
             ).to_dict()
             
             return [style_msg, options_msg]
             
         elif current_state == "awaiting_style_preference":
-            # After getting style preference, ask about budget
             self.set_conversation_state("awaiting_budget")
+            budget_responses = responses['awaiting_budget']
             
-            budget_msg = self.create_text_message(
-                "מה התקציב המשוער שהיית רוצה להשקיע בפרויקט?"
-            )
+            budget_msg = self.create_text_message(budget_responses['question'])
             
             options_msg = InteractiveMessagePayload(
                 to=self.recipient,
-                body="טווח תקציב:",
-                button_messages=[
-                    "עד 5,000 ₪",
-                    "5,000-15,000 ₪",
-                    "15,000-30,000 ₪",
-                    "מעל 30,000 ₪"
-                ]
+                body=budget_responses['options']['title'],
+                button_messages=budget_responses['options']['buttons']
             ).to_dict()
             
             return [budget_msg, options_msg]
             
         elif current_state == "awaiting_budget":
-            # Final message suggesting consultation
             self.set_conversation_state("completed")
+            completion_responses = responses['completed']
             
-            final_msg = self.create_text_message(
-                "תודה על השיתוף! כדי שאוכל להבין טוב יותר את הצרכים והחלל, "
-                "אשמח להיפגש לפגישת ייעוץ ראשונית. בפגישה נוכל לדבר על הרעיונות שלך "
-                "ואוכל להציע כיווני עיצוב מתאימים."
-            )
+            final_msg = self.create_text_message(completion_responses['final'])
             
             schedule_msg = InteractiveMessagePayload(
                 to=self.recipient,
-                body="מתי נוח לך להיפגש?",
-                button_messages=["בוקר", "צהריים", "ערב"]
+                body=completion_responses['schedule']['title'],
+                button_messages=completion_responses['schedule']['buttons']
             ).to_dict()
             
             return [final_msg, schedule_msg]
             
         # Default response if state is unknown
-        return [self.create_text_message(
-            "מצטערת, לא הבנתי. האם תוכל/י לנסח מחדש?"
-        )]
+        return [self.create_text_message(GENERAL_RESPONSES['error'])]

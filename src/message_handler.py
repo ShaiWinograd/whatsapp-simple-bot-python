@@ -84,15 +84,7 @@ def handle_text_message(message: Dict[str, Any], base_payload: Dict[str, Any]) -
         service = active_conversations[base_payload["to"]]
         return service.handle_response(message)
     
-    command_text = message.get('text', {}).get('body', '').strip()
-    
-    if command_text == 'היי אמא':
-        return [TextMessagePayload(
-            to=base_payload["to"],
-            body=RESPONSES['היי אמא']
-        ).to_dict()]
-    
-    # For any other message, send welcome messages
+    # For any other text message, show the welcome message
     return create_welcome_messages(base_payload["to"])
 
 
@@ -109,9 +101,18 @@ def process_message(message: Dict[str, Any]) -> List[Dict[str, Any]]:
     if not validate_sender(message):
         return []
 
+    sender_number = message.get('from', '').strip()
+    
+    # Check for specific phone number and return custom response
+    if sender_number == '972543349144':
+        return [TextMessagePayload(
+            to=sender_number,
+            body="תודה שפנית, אבל שי היא הבת האהובה עלי ואין לי זמן גם אלייך"
+        ).to_dict()]
+
     # Create a base payload object with the sender's number
     base_payload = {
-        "to": message.get('from', '').strip(),
+        "to": sender_number,
     }
 
     command_type = message.get('type', '').strip().lower()

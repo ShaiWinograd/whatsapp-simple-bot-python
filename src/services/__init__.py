@@ -6,6 +6,7 @@ from src.services.moving_service import MovingService
 from src.services.organization_service import OrganizationService
 from src.services.design_service import DesignService
 from src.services.consultation_service import ConsultationService
+from src.services.other_service import OtherService
 
 
 # Map of service names to their corresponding classes
@@ -13,7 +14,8 @@ SERVICE_MAP: Dict[str, Type[BaseConversationService]] = {
     "מעבר דירה": MovingService,
     "סידור וארגון": OrganizationService,
     "עיצוב והלבשת הבית": DesignService,
-    "שיחת ייעוץ": ConsultationService
+    "שיחת ייעוץ": ConsultationService,
+    "אחר": OtherService
 }
 
 
@@ -41,5 +43,6 @@ __all__ = [
     'OrganizationService',
     'DesignService',
     'ConsultationService',
+    'OtherService',
     'create_service'
 ]
