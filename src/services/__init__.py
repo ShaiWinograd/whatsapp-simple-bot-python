@@ -13,8 +13,6 @@ from .other_service import OtherService
 SERVICE_MAP: Dict[str, Type[BaseConversationService]] = {
     "מעבר דירה": MovingService,
     "סידור וארגון": OrganizationService,
-    "עיצוב והלבשת הבית": DesignService,
-    "שיחת ייעוץ": ConsultationService,
     "אחר": OtherService
 }
 
@@ -41,8 +39,6 @@ __all__ = [
     'BaseConversationService',
     'MovingService',
     'OrganizationService',
-    'DesignService',
-    'ConsultationService',
     'OtherService',
     'create_service'
 ]

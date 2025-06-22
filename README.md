@@ -1,6 +1,6 @@
 # WhatsApp Simple Bot Python
 
-A modular WhatsApp bot built with Python, using the WhatsApp Cloud API. The bot provides various services including consultation, design, moving, and organization services through a conversational interface.
+A modular WhatsApp bot built with Python, using the WhatsApp Cloud API. The bot provides moving and organization services through a conversational interface, with more services planned for future implementation.
 
 ## Project Structure
 
@@ -20,8 +20,6 @@ whatsapp-simple-bot-python/
 │   ├── services/          # Business logic services
 │   │   ├── __init__.py
 │   │   ├── base_service.py
-│   │   ├── consultation_service.py
-│   │   ├── design_service.py
 │   │   ├── moving_service.py
 │   │   ├── organization_service.py
 │   │   ├── other_service.py
@@ -65,11 +63,10 @@ The bot will start running on `http://localhost:8080`.
 ## Features
 
 - Modular and maintainable code structure
-- Service-based architecture for different business functions:
-  - Consultation service
-  - Design service
-  - Moving service
-  - Organization service
+- Service-based architecture for business functions:
+  - Moving service: Handles moving-related inquiries and bookings
+  - Organization service: Manages organization and storage solutions
+  - Additional services planned for future implementation
 - Conversation state management
 - Configurable message responses
 - Early message validation to improve efficiency

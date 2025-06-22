@@ -5,8 +5,6 @@ from src.services.base_service import BaseConversationService
 
 class ServiceType(Enum):
     ORGANIZATION = "organization"
-    DESIGN = "design"
-    CONSULTATION = "consultation"
     MOVING = "moving"
     OTHER = "other"
 

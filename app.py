@@ -5,8 +5,6 @@ from src.chat import MessageHandler, ConversationManager
 from src.utils.whatsapp_client import WhatsAppClient
 from src.services.service_factory import ServiceFactory, ServiceType
 from src.services.organization_service import OrganizationService
-from src.services.design_service import DesignService
-from src.services.consultation_service import ConsultationService
 from src.services.moving_service import MovingService
 from src.services.other_service import OtherService
 
@@ -14,8 +12,6 @@ load_dotenv()  # Load environment variables from a .env file
 
 # Register service implementations
 ServiceFactory.register(ServiceType.ORGANIZATION, OrganizationService)
-ServiceFactory.register(ServiceType.DESIGN, DesignService)
-ServiceFactory.register(ServiceType.CONSULTATION, ConsultationService)
 ServiceFactory.register(ServiceType.MOVING, MovingService)
 ServiceFactory.register(ServiceType.OTHER, OtherService)
 

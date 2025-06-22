@@ -12,8 +12,6 @@ GENERAL_RESPONSES = {
     'options': [
         'מעבר דירה',
         'סידור וארגון',
-        'עיצוב והלבשת הבית',
-        'שיחת ייעוץ',
         'אחר',
         'אשמח לדבר עם נציג/ה',
     ],
@@ -213,8 +211,6 @@ OTHER_RESPONSES = {
 SERVICE_RESPONSES = {
     'organization': ORGANIZATION_RESPONSES,
     'moving': MOVING_RESPONSES,
-    'design': DESIGN_RESPONSES,
-    'consultation': CONSULTATION_RESPONSES,
     'אחר': OTHER_RESPONSES
 }
 
