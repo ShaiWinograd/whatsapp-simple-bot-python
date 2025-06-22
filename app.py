@@ -1,10 +1,29 @@
 from flask import Flask, request, jsonify
 import os
 from dotenv import load_dotenv
-from src.message_handler import process_message
+from src.message_handler import MessageHandler
 from src.utils.whatsapp_client import WhatsAppClient
+from src.conversation_manager import ConversationManager
+from src.services.service_factory import ServiceFactory, ServiceType
+from src.services.organization_service import OrganizationService
+from src.services.design_service import DesignService
+from src.services.consultation_service import ConsultationService
+from src.services.moving_service import MovingService
+from src.services.other_service import OtherService
 
 load_dotenv()  # Load environment variables from a .env file
+
+# Register service implementations
+ServiceFactory.register(ServiceType.ORGANIZATION, OrganizationService)
+ServiceFactory.register(ServiceType.DESIGN, DesignService)
+ServiceFactory.register(ServiceType.CONSULTATION, ConsultationService)
+ServiceFactory.register(ServiceType.MOVING, MovingService)
+ServiceFactory.register(ServiceType.OTHER, OtherService)
+
+# Initialize the message handler with its dependencies
+conversation_manager = ConversationManager()
+service_factory = ServiceFactory()
+message_handler = MessageHandler(conversation_manager, service_factory)
 
 app = Flask(__name__)
 
@@ -25,7 +44,7 @@ def handle_new_messages():
             
         for message in messages:
             # Process the message and get response payload
-            payloads = process_message(message)
+            payloads = message_handler.process_message(message)
             if payloads:
                 try:
                     # Send each response in the list

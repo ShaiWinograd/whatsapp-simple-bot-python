@@ -16,10 +16,12 @@ class WhatsAppClient:
         Returns:
             dict: The API response or error details
         """
-        # Determine message type from payload
-        message_type = 'interactive' if 'action' in payload else 'text'
+        # Determine message type from payload structure
+        message_type = 'text'
+        if 'action' in payload:  # Interactive messages have an action field
+            message_type = 'interactive'
+            
         api_url = get_api_url(message_type)
-        
         print(f"Sending {message_type} message to URL: {api_url}\n")
         print(f"Payload: {payload}\n")
         

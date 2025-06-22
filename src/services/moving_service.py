@@ -23,14 +23,81 @@ class MovingService(BaseConversationService):
         responses = SERVICE_RESPONSES['moving']['initial']
         
         welcome_msg = self.create_text_message(responses['welcome'])
-        
+
         options_msg = InteractiveMessagePayload(
             to=self.recipient,
             body=responses['options']['title'],
             button_messages=responses['options']['buttons']
-        ).to_dict()
+        )
+
+        return [welcome_msg, options_msg.to_dict()]
+
+    def handle_response(self, message: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Handle user response based on current conversation state."""
+        current_state = self.get_conversation_state()
+        responses = SERVICE_RESPONSES['moving']
+
+        if current_state == "awaiting_packing_choice":
+            list_reply = message.get('interactive', {}).get('list_reply', {})
+            selected_id = list_reply.get('id')
+
+            # Map list selection IDs to the original options
+            option_map = {
+                "0": "אריזה",
+                "1": "פריקה",
+                "2": "אריזה ופריקה"
+            }
+
+            if selected_id in option_map:
+                self.set_conversation_state("awaiting_move_type")
+                move_responses = responses['awaiting_move_type']
+
+                location_msg = self.create_text_message(move_responses['question'])
+
+                location_options = InteractiveMessagePayload(
+                    to=self.recipient,
+                    body=move_responses['options']['title'],
+                    button_messages=move_responses['options']['buttons']
+                ).to_dict()
+
+                return [location_msg, location_options]
+
+        elif current_state == "awaiting_move_type":
+            response = message.get('interactive', {}).get('button_reply', {}).get('id', '')
+
+            if response in responses['awaiting_move_type']['options']['buttons']:
+                self.set_conversation_state("awaiting_property_size")
+
+                size_msg = self.create_text_message(
+                    responses['awaiting_property_size']['question']
+                )
+                return [size_msg]
+
+        elif current_state == "awaiting_property_size":
+            self.set_conversation_state("awaiting_move_date")
+
+            date_msg = self.create_text_message(
+                responses['awaiting_move_date']['question']
+            )
+            return [date_msg]
+
+        elif current_state == "awaiting_move_date":
+            self.set_conversation_state("completed")
+            completion_responses = responses['completed']
+
+            final_msg = self.create_text_message(completion_responses['final'])
+
+            schedule_msg = InteractiveMessagePayload(
+                to=self.recipient,
+                body=completion_responses['schedule']['title'],
+                button_messages=completion_responses['schedule']['buttons']
+            ).to_dict()
+
+            return [final_msg, schedule_msg]
         
-        return [welcome_msg, options_msg]
+        # Default response if state is unknown
+        return [self.create_text_message(GENERAL_RESPONSES['error'])]
+        
 
     def handle_response(self, message: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Handle user response based on current conversation state."""
@@ -38,9 +105,17 @@ class MovingService(BaseConversationService):
         responses = SERVICE_RESPONSES['moving']
         
         if current_state == "awaiting_packing_choice":
-            response = message.get('interactive', {}).get('button_reply', {}).get('id', '')
+            list_reply = message.get('interactive', {}).get('list_reply', {})
+            selected_id = list_reply.get('id')
             
-            if response in responses['initial']['options']['buttons']:
+            # Map list selection IDs to the original options
+            option_map = {
+                "0": "אריזה",
+                "1": "פריקה",
+                "2": "אריזה ופריקה"
+            }
+            
+            if selected_id in option_map:
                 self.set_conversation_state("awaiting_move_type")
                 move_responses = responses['awaiting_move_type']
                 
