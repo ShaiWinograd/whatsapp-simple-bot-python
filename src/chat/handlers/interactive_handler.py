@@ -1,0 +1,75 @@
+"""Interactive message handler implementation."""
+from typing import Dict, Any, List
+from venv import logger
+from .base_handler import BaseMessageHandler
+from ...config.responses import RESPONSES
+from ...services.service_factory import ServiceType
+from ...utils.errors import ConversationError
+
+
+class InteractiveMessageHandler(BaseMessageHandler):
+    """Handler for interactive messages and button replies."""
+
+    def handle_button_reply(self, button_title: str, recipient: str) -> List[Dict[str, Any]]:
+        """
+        Handle a button reply message.
+
+        Args:
+            button_title (str): The title of the button that was clicked
+            recipient (str): The recipient's phone number
+
+        Returns:
+            List[Dict[str, Any]]: List of message payloads to send
+        """
+        if button_title not in RESPONSES['options']:
+            logger.error(f"Button title not found in RESPONSES options: {button_title}")
+            return self.create_welcome_messages(recipient)
+
+        try:
+            service_type = ServiceType(button_title)
+            service = self.service_factory.create(service_type, recipient)
+            self.conversation_manager.add_conversation(recipient, service)
+            return service.handle_initial_message()
+        except (ValueError, ConversationError) as e:
+            logger.error(f"Failed to create service: {e}")
+            return self.create_welcome_messages(recipient)
+
+    def handle(self, message: Dict[str, Any], base_payload: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """
+        Handle interactive message type and return appropriate response.
+
+        Args:
+            message (Dict[str, Any]): The incoming WhatsApp message
+            base_payload (Dict[str, Any]): Base payload for response message
+
+        Returns:
+            List[Dict[str, Any]]: List of message payloads to send
+        """
+        recipient = base_payload["to"]
+
+        # Check for existing conversation first
+        conversation_response = self.check_existing_conversation(recipient, message)
+        if conversation_response is not None:
+            return conversation_response
+
+        # Handle regular interactive message
+        if 'interactive' in message:
+            button_reply = message.get('interactive', {}).get('button_reply', {})
+            selected_option = button_reply.get('id', '')
+            
+            if selected_option in RESPONSES['options']:
+                try:
+                    service_type = ServiceType(selected_option)
+                    service = self.service_factory.create(service_type, recipient)
+                    self.conversation_manager.add_conversation(recipient, service)
+                    return service.handle_initial_message()
+                except (ValueError, ConversationError) as e:
+                    logger.error(f"Failed to create service: {e}")
+                    return self.create_welcome_messages(recipient)
+
+        # Handle button reply
+        elif 'reply' in message and message.get('reply', {}).get('type') == 'buttons_reply':
+            button_title = message.get('reply', {}).get('buttons_reply', {}).get('title', '')
+            return self.handle_button_reply(button_title, recipient)
+
+        return self.create_welcome_messages(recipient)
