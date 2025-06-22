@@ -44,9 +44,7 @@ def _send_message_responses(payloads):
         payloads (list): List of payloads to send.
     """
     for payload in payloads:
-        print(f"Full payload: {payload}\n")  # Log complete payload
-        response = WhatsAppClient.send_message(payload)
-        print(f"API Response: {response}\n")
+        WhatsAppClient.send_message(payload)
 
 def _handle_error(e, request_data):
     """Handle and format error responses.
@@ -57,10 +55,8 @@ def _handle_error(e, request_data):
         Tuple: (error_response, status_code)
     """
     error_details = {
-        'error': str(e),
-        'message_data': request_data
+        'error': str(e)
     }
-    print(f"Error details: {error_details}\n")
     return jsonify(error_details), 500
 
 @app.route('/hook', methods=['POST'])
@@ -71,8 +67,6 @@ def handle_new_messages():
     """
     try:
         data = request.json
-        print("Received webhook data:", data)
-        
         # Validate webhook data
         early_response, status_code, messages = _validate_webhook_data(data)
         if early_response:
@@ -85,7 +79,6 @@ def handle_new_messages():
                 try:
                     _send_message_responses(payloads)
                 except Exception as e:
-                    print(f"Error sending message: {str(e)}\n")
                     raise
 
         return jsonify({"status": "success"}), 200

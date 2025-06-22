@@ -22,9 +22,6 @@ class WhatsAppClient:
             message_type = 'interactive'
             
         api_url = get_api_url(message_type)
-        print(f"Sending {message_type} message to URL: {api_url}\n")
-        print(f"Payload: {payload}\n")
-        
         try:
             response = requests.post(
                 api_url,
@@ -32,10 +29,6 @@ class WhatsAppClient:
                 headers=WHATSAPP_API['headers']
             )
             
-            print(f"Response status: {response.status_code}\n")
-            print(f"Response headers: {response.headers}\n")
-            print(f"Response from API: {response.text}\n")
-    
             if response.status_code != 200:
                 error_msg = {
                     'status_code': response.status_code,
@@ -73,7 +66,7 @@ class WhatsAppClient:
                 headers=WHATSAPP_API['headers']
             )
             
-            print(f"Applied label {label_id} to {phone_number}. Response:", response.text)
+            print(f"Applied label {label_id} to {phone_number}")
             return response.json()
             
         except Exception as e:
@@ -101,7 +94,7 @@ class WhatsAppClient:
                 headers=WHATSAPP_API['headers']
             )
             
-            print(f"Removed label {label_id} from {phone_number}. Response:", response.text)
+            print(f"Removed label {label_id} from {phone_number}")
             return response.json()
             
         except Exception as e:

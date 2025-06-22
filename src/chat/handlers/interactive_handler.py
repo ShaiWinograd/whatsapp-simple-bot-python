@@ -29,20 +29,17 @@ class InteractiveMessageHandler(BaseMessageHandler):
             List[Dict[str, Any]]: List of message payloads to send
         """
         if button_title not in RESPONSES['options']:
-            logger.error(f"Button title not found in RESPONSES options: {button_title}")
             return self.create_welcome_messages(recipient)
 
         try:
             service_type = SERVICE_TYPE_MAPPING.get(button_title)
             if service_type is None:
-                logger.error(f"No service type mapping found for button title: {button_title}")
                 return self.create_welcome_messages(recipient)
                 
             service = self.service_factory.create(service_type, recipient)
             self.conversation_manager.add_conversation(recipient, service)
             return service.handle_initial_message()
-        except ConversationError as e:
-            logger.error(f"Failed to create service: {e}")
+        except ConversationError:
             return self.create_welcome_messages(recipient)
 
     def handle(self, message: Dict[str, Any], base_payload: Dict[str, Any]) -> List[Dict[str, Any]]:
@@ -93,8 +90,7 @@ class InteractiveMessageHandler(BaseMessageHandler):
                     service = self.service_factory.create(service_type, recipient)
                     self.conversation_manager.add_conversation(recipient, service)
                     return service.handle_initial_message()
-                except ConversationError as e:
-                    logger.error(f"Failed to create service: {e}")
+                except ConversationError:
                     return self.create_welcome_messages(recipient)
 
         # Handle button reply
