@@ -31,10 +31,10 @@ class HumanSupportService(BaseConversationService):
                 WHATSAPP_LABELS['waiting_human_support']
             )
             
-        if WHATSAPP_LABELS['bot new conversation']:
+        if WHATSAPP_LABELS['bot_new_conversation']:
             WhatsAppClient.remove_label(
                 self.recipient,
-                WHATSAPP_LABELS['bot new conversation']
+                WHATSAPP_LABELS['bot_new_conversation']
             )
         
         return [
