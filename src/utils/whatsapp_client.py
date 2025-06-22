@@ -1,6 +1,6 @@
 """WhatsApp API client for sending messages and managing labels."""
 import requests
-from src.config.responses import WHATSAPP_API, WHATSAPP_LABELS, get_api_url
+from src.config.whatsapp import API as WHATSAPP_API, LABELS as WHATSAPP_LABELS, get_api_url
 
 class WhatsAppClient:
     """Client for interacting with WhatsApp API."""
@@ -16,10 +16,13 @@ class WhatsAppClient:
         Returns:
             dict: The API response or error details
         """
-        # Determine message type from payload structure
+        # Determine message type from payload
         message_type = 'text'
-        if 'action' in payload:  # Interactive messages have an action field
-            message_type = 'interactive'
+        if 'type' in payload:
+            message_type = payload['type']
+            # 'button' type should use 'interactive' endpoint
+            if message_type == 'button':
+                message_type = 'interactive'
             
         api_url = get_api_url(message_type)
         try:

@@ -1,5 +1,5 @@
 """Validation utilities for WhatsApp messages."""
-from src.config.responses import DEBUG_PHONE_NUMBER
+from src.config.whatsapp import DEBUG_PHONE_NUMBER
 
 def validate_sender(message):
     """

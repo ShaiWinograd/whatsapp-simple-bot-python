@@ -2,7 +2,7 @@
 from typing import List, Dict, Any
 from ..models.webhook_payload import InteractiveMessagePayload
 from .base_service import BaseConversationService
-from ..config.responses import SERVICE_RESPONSES, GENERAL_RESPONSES
+from ..config.responses import SERVICE_RESPONSES, GENERAL
 
 
 
@@ -81,4 +81,4 @@ class DesignService(BaseConversationService):
             return [final_msg, schedule_msg]
             
         # Default response if state is unknown
-        return [self.create_text_message(GENERAL_RESPONSES['error'])]
+        return [self.create_text_message(GENERAL['error'])]

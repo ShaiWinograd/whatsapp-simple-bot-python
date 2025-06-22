@@ -43,32 +43,50 @@ class MediaMessagePayload(BaseWebhookPayload):
 @dataclass
 class InteractiveMessagePayload(BaseWebhookPayload):
     """Payload for interactive messages with buttons."""
-    body: str
-    button_messages: List[str]
+    body_text: str
+    header_text: Optional[str] = None
+    footer_text: Optional[str] = None
+    buttons: List[Dict[str, str]] = field(default_factory=list)  # List of {id, title} dicts
 
     def to_dict(self) -> Dict[str, Any]:
+        """Convert to WhatsApp API format."""
         payload = super().to_dict()
-        buttons = []
-        for i, msg in enumerate(self.button_messages):
-            buttons.append({
-                "type": "quick_reply",
-                "title": msg,
-                "id": str(i)
-            })
-
+        
         payload.update({
-            "type": "button",
-            "header": {
-                "text": "השירותים שלנו"
-            },
+            "type": "button",  # Root level type must be: list, button, or product
             "body": {
-                "text": self.body
-            },
-            "footer": {
-                "text": "בחר.י אחת מהאפרויות על מנת להתקדם"
-            },
-            "action": {
-                "buttons": buttons
+                "text": self.body_text
             }
         })
+
+        # Add optional header
+        if self.header_text:
+            payload["header"] = {
+                "type": "text",
+                "text": self.header_text
+            }
+
+        # Add optional footer
+        if self.footer_text:
+            payload["footer"] = {
+                "text": self.footer_text
+            }
+
+        # Add buttons if present
+        if self.buttons:
+            print("Creating button payload with buttons:", self.buttons)
+            buttons = [
+                {
+                    "type": "quick_reply",
+                    "id": str(button["id"]),
+                    "title": button["title"]
+                }
+                for button in self.buttons
+            ]
+            print("Final button structure:", buttons)
+            payload["action"] = {
+                "buttons": buttons
+            }
+            print("Final payload structure:", payload)
+
         return payload

@@ -2,7 +2,8 @@
 from typing import List, Dict, Any
 
 from .base_service import BaseConversationService
-from ..config.responses import SERVICE_RESPONSES, WHATSAPP_LABELS
+from ..config.responses import SERVICE_RESPONSES
+from ..config.whatsapp import LABELS as WHATSAPP_LABELS
 from ..models.webhook_payload import TextMessagePayload, InteractiveMessagePayload
 from ..utils.whatsapp_client import WhatsAppClient
 

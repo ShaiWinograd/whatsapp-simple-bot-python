@@ -2,7 +2,7 @@
 from typing import List, Dict, Any
 from ..models.webhook_payload import InteractiveMessagePayload
 from .base_service import BaseConversationService
-from ..config.responses import SERVICE_RESPONSES, GENERAL_RESPONSES
+from ..config.responses import SERVICE_RESPONSES, GENERAL
 
 
 
@@ -26,7 +26,9 @@ class OrganizationService(BaseConversationService):
         
         options_msg = InteractiveMessagePayload(
             to=self.recipient,
+            header=responses['header'] if 'header' in responses else '✨ ארגון וסידור הבית ✨',
             body=responses['options']['title'],
+            footer=responses['footer'] if 'footer' in responses else 'בחר/י את החלל שברצונך לארגן 🏠',
             button_messages=responses['options']['buttons']
         ).to_dict()
         
@@ -54,7 +56,9 @@ class OrganizationService(BaseConversationService):
             
             options_msg = InteractiveMessagePayload(
                 to=self.recipient,
+                header='📅 מתי נוח לך?',
                 body=timing_responses['options']['title'],
+                footer='נמצא את התזמון המתאים ביותר עבורך ⭐',
                 button_messages=timing_responses['options']['buttons']
             ).to_dict()
             
@@ -68,11 +72,13 @@ class OrganizationService(BaseConversationService):
             
             schedule_msg = InteractiveMessagePayload(
                 to=self.recipient,
+                header='📅 קביעת פגישת ייעוץ',
                 body=completion_responses['schedule']['title'],
+                footer='נמצא זמן שמתאים לשנינו! ✨',
                 button_messages=completion_responses['schedule']['buttons']
             ).to_dict()
             
             return [final_msg, schedule_msg]
             
         # Default response if state is unknown
-        return [self.create_text_message(GENERAL_RESPONSES['error'])]
+        return [self.create_text_message(GENERAL['error'])]
