@@ -3,6 +3,8 @@ from abc import ABC, abstractmethod
 from typing import Dict, Any, List
 from ...services.service_factory import ServiceFactory
 from ..conversation_manager import ConversationManager
+from ...utils.whatsapp_client import WhatsAppClient
+from ...config.responses import WHATSAPP_LABELS
 
 
 class BaseMessageHandler(ABC):
@@ -55,6 +57,13 @@ class BaseMessageHandler(ABC):
         """
         from ...models.webhook_payload import InteractiveMessagePayload
         from ...config.responses import RESPONSES
+
+        # Apply bot new conversation label
+        if WHATSAPP_LABELS['bot_new_conversation']:
+            WhatsAppClient.apply_label(
+                recipient,
+                WHATSAPP_LABELS['bot_new_conversation']
+            )
 
         options_message = InteractiveMessagePayload(
             to=recipient,

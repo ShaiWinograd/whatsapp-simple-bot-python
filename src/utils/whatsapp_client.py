@@ -64,7 +64,8 @@ class WhatsAppClient:
         Returns:
             dict: The API response
         """
-        api_url = f"{WHATSAPP_API['base_url']}labels/{label_id}//{phone_number}"
+        formatted_number = f"{phone_number}@s.whatsapp.net"
+        api_url = f"{WHATSAPP_API['base_url']}labels/{label_id}//{formatted_number}"
         
         try:
             response = requests.post(
@@ -91,7 +92,8 @@ class WhatsAppClient:
         Returns:
             dict: The API response
         """
-        api_url = f"{WHATSAPP_API['base_url']}labels/{label_id}//{phone_number}"
+        formatted_number = f"{phone_number}@s.whatsapp.net"
+        api_url = f"{WHATSAPP_API['base_url']}labels/{label_id}//{formatted_number}"
         
         try:
             response = requests.delete(

@@ -2,8 +2,6 @@ from datetime import datetime, timedelta
 from typing import Dict, Optional
 
 from ..services.base_service import BaseConversationService
-from ..utils.whatsapp_client import WhatsAppClient
-from ..config.responses import WHATSAPP_LABELS
 
 class ConversationManager:
     def __init__(self, timeout_minutes: int = 300): # Default timeout of 300 minutes (5 hours)
@@ -20,14 +18,6 @@ class ConversationManager:
         """
         self.conversations[user_id] = service
         self.last_activity[user_id] = datetime.now()
-        
-        # Apply labels for new conversation
-        # Apply bot new conversation label
-        if WHATSAPP_LABELS['bot_new_conversation']:
-            WhatsAppClient.apply_label(
-                user_id,
-                WHATSAPP_LABELS['bot_new_conversation']
-            )
     
     def get_conversation(self, user_id: str) -> Optional[BaseConversationService]:
         """Retrieve the conversation service for a user if it exists and is active.
