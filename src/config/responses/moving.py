@@ -3,12 +3,12 @@ from .common import NAVIGATION, SCHEDULING
 
 INITIAL = {
     'header': 'מעבר דירה 🏠',
-    'welcome': "איזה יופי שאתם עוברים דירה בקרוב ✨!",
-    'footer': 'אנחנו כאן ללוות אתכם בכל שלב 🏡',
+    'welcome': "איזה יופי שאתם עוברים דירה בקרוב ✨! במה אנחנו יכולים לעזור?",
+    'footer': 'נשמח ללוות אתכם בתהליך 🏡',
     'options': {
         'buttons': [
             'אריזה 📦',
-            'סידור אחרי מעבר 🏡',
+            'סידור אחרי המעבר 🏡',
             'גם וגם ✨',
             NAVIGATION['back_to_main'],
             NAVIGATION['talk_to_representative']
@@ -26,7 +26,7 @@ PRICE_QUOTE_BASE = """כדי שנוכל לשלוח הצעת מחיר מדויק�
 
 PRICE_QUOTE = {
     'packing_only': {
-        'header': 'שירות אריזה 📦',
+        'header': 'אריזה 📦',
         'body': PRICE_QUOTE_BASE.format(
             address_type='כתובת של הבית הנוכחי',
             extra_fields=''
@@ -38,7 +38,7 @@ PRICE_QUOTE = {
         ]
     },
     'unpacking_only': {
-        'header': 'שירות סידור וארגון אחרי מעבר 🏠',
+        'header': 'סידור וארגון אחרי מעבר 🏠',
         'body': PRICE_QUOTE_BASE.format(
             address_type='כתובת של הבית החדש',
             extra_fields=''
@@ -50,7 +50,7 @@ PRICE_QUOTE = {
         ]
     },
     'both': {
-        'header': 'שירות אריזה ופריקה 📦🏠',
+        'header': 'אריזה ופריקה 📦🏠',
         'body': PRICE_QUOTE_BASE.format(
             address_type='כתובת של הבית הנוכחי',
             extra_fields='3. כתובת של הבית החדש\n'
@@ -70,7 +70,6 @@ VERIFY_DETAILS = {
 
 האם הפרטים נכונים?""",
     'options': {
-        'title': 'הפרטים נכונים?',
         'buttons': [
             'כן, הפרטים נכונים ✅',
             'לא, צריך לתקן ❌',
@@ -81,13 +80,14 @@ VERIFY_DETAILS = {
 }
 
 PHOTO_REQUIREMENT = {
-    'message': """כדי שנוכל להעריך את היקף העבודה, נשמח לקבל תמונות או סרטון של רהיטי האחסון בבית (ארונות, שידות וכו׳) כשהדלתות והמגירות פתוחות.
-אנחנו לא שופטים ואין לנו ציפייה למצב מסוים - ראינו הכל! המטרה היא רק להעריך את היקף העבודה ולתת הצעת מחיר מדויקת.""",
+    'message': """כדי שנוכל להעריך את היקף העבודה ולתת הצעת מחיר מדויקת, נשמח לקבל תמונות או סרטון של רהיטי האחסון בבית (ארונות, שידות וכו׳) כשהדלתות והמגירות פתוחות.
+
+חשוב לציין - התמונות עוזרות לנו לתת הצעת מחיר מדויקת יותר ולהיערך טוב יותר לעבודה. אנחנו לא שופטים ואין לנו ציפייה למצב מסוים - ראינו הכל!
+
+אנא שלח/י תמונות או סרטון, או בחר/י באחת מהאפשרויות למטה:""",
     'options': {
         'title': 'בחר/י אפשרות:',
         'buttons': [
-            'שלח/י תמונות 📸',
-            'שלח/י סרטון 🎥',
             NAVIGATION['back_to_main'],
             NAVIGATION['talk_to_representative']
         ]
@@ -95,18 +95,7 @@ PHOTO_REQUIREMENT = {
 }
 
 COMPLETION = {
-    'header': 'תודה על השיתוף! ✨',
-    'final': 'אשמח לקבוע פגישת ייעוץ כדי לדבר על התהליך בפירוט ולהבין איך אני יכולה לעזור. האם את/ה פנוי/ה לשיחה בימים הקרובים?',
-    'footer': 'בדרך לבית החדש שלכם! 🏡',
-    'schedule': {
-        **SCHEDULING,
-        'buttons': [
-            'הבוקר 🌅',
-            'אחה״צ ☀️',
-            'הערב 🌙',
-            NAVIGATION['talk_to_representative']
-        ]
-    }
+    'after_media': """תודה רבה על התמונות!."""
 }
 
 # Export all responses
@@ -115,8 +104,5 @@ RESPONSES = {
     'price_quote': PRICE_QUOTE,
     'verify_details': VERIFY_DETAILS,
     'photo_requirement': PHOTO_REQUIREMENT,
-    'awaiting_move_type': MOVE_TYPE,
-    'awaiting_property_size': PROPERTY_SIZE,
-    'awaiting_move_date': MOVE_DATE,
     'completed': COMPLETION
 }

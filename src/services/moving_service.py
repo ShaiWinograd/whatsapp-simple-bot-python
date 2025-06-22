@@ -2,8 +2,12 @@
 from typing import List, Dict, Any
 from .base_service import BaseConversationService
 from ..config.responses import SERVICE_RESPONSES, GENERAL
+from ..config.responses.common import NAVIGATION
+from ..config.whatsapp import LABELS
 from ..utils.interactive_message_utils import get_button_title
 from ..utils.interactive_message_builder import create_interactive_message
+from ..utils.scheduling import get_available_slots
+from ..utils.whatsapp_client import WhatsAppClient
 
 
 class MovingService(BaseConversationService):
@@ -46,157 +50,166 @@ class MovingService(BaseConversationService):
 
         return [payload]
 
+    def _create_photo_requirement_message(self) -> List[Dict[str, Any]]:
+        """Create photo requirement messages with options."""
+        responses = SERVICE_RESPONSES['moving']
+        photo_msg = self.create_text_message(responses['photo_requirement']['message'])
+        photo_options = create_interactive_message(
+            recipient=self.recipient,
+            body_text=responses['photo_requirement']['options']['title'],
+            header_text="שליחת תמונות 📸",
+            footer_text="התמונות יעזרו לנו להעריך את היקף העבודה",
+            buttons=[{"id": str(i), "title": btn} for i, btn in enumerate(responses['photo_requirement']['options']['buttons'])]
+        )
+        return [photo_msg, photo_options]
+
+    def _create_quote_message(self) -> Dict[str, Any]:
+        """Create quote message based on service type."""
+        responses = SERVICE_RESPONSES['moving']
+        quote_type = self.service_type
+        quote_config = responses['price_quote'][quote_type if quote_type == 'both' else f"{quote_type}_only"]
+        
+        return create_interactive_message(
+            recipient=self.recipient,
+            body_text=quote_config['body'],
+            header_text=quote_config['header'],
+            footer_text=quote_config['footer'],
+            buttons=[{"id": str(i), "title": btn} for i, btn in enumerate(quote_config['buttons'])]
+        )
+
+    def _handle_packing_choice(self, message: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Handle packing choice state."""
+        selected_option = get_button_title(message)
+        option_map = {
+            "אריזה 📦": "packing",
+            "סידור אחרי המעבר 🏡": "unpacking",
+            "גם וגם ✨": "both"
+        }
+
+        if selected_option in option_map:
+            self.service_type = option_map[selected_option]
+            quote_msg = self._create_quote_message()
+            self.set_conversation_state("awaiting_customer_details")
+            return [quote_msg]
+        return [self.create_text_message(GENERAL['error'])]
+
+    def _handle_customer_details(self, message: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Handle customer details state."""
+        text = message.get('text', {}).get('body', '')
+        if text:
+            self.customer_details = text
+            responses = SERVICE_RESPONSES['moving']
+            verify_options = create_interactive_message(
+                recipient=self.recipient,
+                body_text=responses['verify_details']['message'].format(details=self.customer_details),
+                header_text="✅ אימות פרטים",
+                footer_text="אנא אשר/י שהפרטים נכונים",
+                buttons=[{"id": str(i), "title": btn} for i, btn in enumerate(responses['verify_details']['options']['buttons'])]
+            )
+            self.set_conversation_state("awaiting_verification")
+            return [verify_options]
+        return [self.create_text_message(GENERAL['error'])]
+
+    def _handle_verification(self, message: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Handle verification state."""
+        button_title = get_button_title(message)
+        
+        if button_title == 'כן, הפרטים נכונים ✅':
+            self.set_conversation_state("awaiting_photos")
+            return self._create_photo_requirement_message()
+        elif button_title == 'לא, צריך לתקן ❌':
+            self.set_conversation_state("awaiting_customer_details")
+            self.customer_details = None
+            return [self._create_quote_message()]
+        return [self.create_text_message(GENERAL['error'])]
+
+    def _handle_photos(self, message: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Handle photos state."""
+        print(f"DEBUG - Handling photo message: {message}")
+        
+        # Handle navigation buttons first
+        button_title = get_button_title(message)
+        if button_title in [NAVIGATION['back_to_main'], NAVIGATION['talk_to_representative']]:
+            return []
+
+        responses = SERVICE_RESPONSES['moving']
+        
+        # Check message type directly from root
+        message_type = message.get('type', '')
+        
+        if message_type in ['image', 'video']:
+            self.set_conversation_state("completed")
+            messages = [self.create_text_message(responses['completed']['after_media'])]
+            messages.extend(self._create_completion_messages())
+            return messages
+            
+        # If not an image/video, remind about photos and show navigation options
+        return [
+            self.create_text_message(responses['photo_requirement']['message']),
+            create_interactive_message(
+                recipient=self.recipient,
+                body_text=responses['photo_requirement']['options']['title'],
+                header_text="שליחת תמונות 📸",
+                footer_text="התמונות יעזרו לנו להעריך את היקף העבודה",
+                buttons=[
+                    {"id": "main_menu", "title": NAVIGATION['back_to_main']},
+                    {"id": "support", "title": NAVIGATION['talk_to_representative']}
+                ]
+            )
+        ]
+
     def handle_response(self, message: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Handle user response based on current conversation state."""
-        print(f"\nDEBUG - Handling response in MovingService")
-        current_state = self.get_conversation_state()
-        print(f"DEBUG - Current state: {current_state}")
-        responses = SERVICE_RESPONSES['moving']
-
-        if current_state == "awaiting_packing_choice":
-
-            print(f"DEBUG - Processing packing choice")
-            # Get button selection
-            selected_option = get_button_title(message)
-            print(f"DEBUG - Selected option from button: {selected_option}")
-            
-            # Map button titles to service types
-            option_map = {
-                "אריזה 📦": "packing",
-                "סידור אחרי המעבר 🏡": "unpacking",
-                "גם וגם ✨": "both"
-            }
-
-            print(f"DEBUG - Available options: {list(option_map.keys())}")
-            if selected_option in option_map:
-                print(f"DEBUG - Match found for option: {selected_option}")
-                self.service_type = option_map[selected_option]
-                print(f"DEBUG - Setting service type to: {self.service_type}")
-                
-                # Get quote config based on service type
-                quote_type = self.service_type
-                quote_config = responses['price_quote'][quote_type if quote_type == 'both' else f"{quote_type}_only"]
-                
-                # Create interactive message with header and footer
-                quote_msg = create_interactive_message(
-                    recipient=self.recipient,
-                    body_text=quote_config['body'],
-                    header_text=quote_config['header'],
-                    footer_text=quote_config['footer'],
-                    buttons=[{"id": str(i), "title": btn} for i, btn in enumerate(quote_config['buttons'])]
-                )
-                
-                self.set_conversation_state("awaiting_customer_details")
-                return [quote_msg]
-
-        elif current_state == "awaiting_customer_details":
-            # Store the raw message text
-            text = message.get('text', {}).get('body', '')
-            if text:
-                self.customer_details = text
-
-                # Show the raw text for verification
-                verify_msg = self.create_text_message(
-                    responses['verify_details']['message'].format(details=self.customer_details)
-                )
-                
-                # Create interactive message for verification
-                verify_options = create_interactive_message(
-                    recipient=self.recipient,
-                    body_text=responses['verify_details']['options']['title'],
-                    header_text="✅ אימות פרטים",
-                    footer_text="אנא אשר/י שהפרטים נכונים",
-                    buttons=[{"id": str(i), "title": btn} for i, btn in enumerate(responses['verify_details']['options']['buttons'])]
-                )
-
-                self.set_conversation_state("awaiting_verification")
-                return [verify_msg, verify_options]
-
-        elif current_state == "awaiting_verification":
-            button_title = get_button_title(message)
-            
-            if button_title == 'כן, הפרטים נכונים ✅':
-                self.set_conversation_state("awaiting_photos")
-                photo_msg = self.create_text_message(responses['photo_requirement']['message'])
-                
-                # Create interactive message for photo requirement
-                photo_options = create_interactive_message(
-                    recipient=self.recipient,
-                    body_text=responses['photo_requirement']['options']['title'],
-                    header_text="שליחת תמונות 📸",
-                    footer_text="התמונות יעזרו לנו להעריך את היקף העבודה",
-                    buttons=[{"id": str(i), "title": btn} for i, btn in enumerate(responses['photo_requirement']['options']['buttons'])]
-                )
-                return [photo_msg, photo_options]
-            elif button_title == 'לא, צריך לתקן ❌':
-                self.set_conversation_state("awaiting_customer_details")
-                # Reset details and show appropriate message based on service type
-                self.customer_details = None
-                
-                # Get quote config based on service type
-                quote_type = self.service_type
-                quote_config = responses['price_quote'][quote_type if quote_type == 'both' else f"{quote_type}_only"]
-                
-                # Create interactive message with header and footer
-                quote_msg = create_interactive_message(
-                    recipient=self.recipient,
-                    body_text=quote_config['body'],
-                    header_text=quote_config['header'],
-                    footer_text=quote_config['footer'],
-                    buttons=[{"id": str(i), "title": btn} for i, btn in enumerate(quote_config['buttons'])]
-                )
-                return [quote_msg]
-
-        elif current_state == "awaiting_photos":
-            # After receiving photos, proceed to move type question
-            self.set_conversation_state("awaiting_move_type")
-            move_responses = responses['awaiting_move_type']
-
-            # Create interactive message for move type
-            location_msg = self.create_text_message(move_responses['question'])
-            location_options = create_interactive_message(
-                recipient=self.recipient,
-                body_text=move_responses['options']['title'],
-                header_text="סוג המעבר 🌍",
-                footer_text="בחר/י את סוג המעבר המתאים",
-                buttons=[{"id": str(i), "title": btn} for i, btn in enumerate(move_responses['options']['buttons'])]
-            )
-
-            return [location_msg, location_options]
-
-        elif current_state == "awaiting_move_type":
-            button_title = get_button_title(message)
-
-            if button_title in responses['awaiting_move_type']['options']['buttons']:
-                self.set_conversation_state("awaiting_property_size")
-                size_msg = self.create_text_message(
-                    responses['awaiting_property_size']['question']
-                )
-                return [size_msg]
-
-        elif current_state == "awaiting_property_size":
-            self.set_conversation_state("awaiting_move_date")
-            date_msg = self.create_text_message(
-                responses['awaiting_move_date']['question']
-            )
-            return [date_msg]
-
-        elif current_state == "awaiting_move_date":
-            self.set_conversation_state("completed")
-            completion_responses = responses['completed']
-
-            final_msg = self.create_text_message(completion_responses['final'])
-            
-            # Create interactive message for scheduling
-            schedule_msg = create_interactive_message(
-                recipient=self.recipient,
-                body_text=completion_responses['schedule']['title'],
-                header_text="תיאום פגישה 📅",
-                footer_text="נשמח לקבוע זמן שנוח לך!",
-                buttons=[{"id": str(i), "title": btn} for i, btn in enumerate(completion_responses['schedule']['buttons'])]
-            )
-
-            return [final_msg, schedule_msg]
+        state_handlers = {
+            "awaiting_packing_choice": self._handle_packing_choice,
+            "awaiting_customer_details": self._handle_customer_details,
+            "awaiting_verification": self._handle_verification,
+            "awaiting_photos": self._handle_photos
+        }
         
-        # Default response if state is unknown
+        current_state = self.get_conversation_state()
+        handler = state_handlers.get(current_state)
+        
+        if handler:
+            return handler(message)
         return [self.create_text_message(GENERAL['error'])]
+        
+    def _create_completion_messages(self) -> List[Dict[str, Any]]:
+        """Helper method to create completion messages."""
+        completion_responses = SERVICE_RESPONSES['moving']['completed']
+        messages = []
+        
+        # Update labels silently
+        WhatsAppClient.remove_label(self.recipient, LABELS['bot_new_conversation'])
+        WhatsAppClient.apply_label(self.recipient, LABELS['waiting_quote'])
+        
+        # Create final message explaining the phone call requirement
+        final_msg = self.create_text_message(
+            "כדי להשלים את תהליך קבלת הצעת המחיר, נצטרך לקיים שיחת טלפון קצרה עם אחד מנציגי התמיכה שלנו."
+            "\n\nנציגינו זמינים בימים ראשון עד חמישי בשעות הבאות:"
+            "\nימים ראשון, שלישי ורביעי: 10:00-12:00"
+            "\nימים שני וחמישי: 17:00-19:00"
+            "\n\nאנא בחר/י מועד מתאים מהאפשרויות הבאות:"
+        )
+        messages.append(final_msg)
+
+        # Get dynamic slots
+        available_slots = get_available_slots()
+        
+        # Add navigation options to the slots
+        available_slots.extend([
+            {"id": "main_menu", "title": NAVIGATION['back_to_main']},
+            {"id": "support", "title": NAVIGATION['talk_to_representative']}
+        ])
+        
+        # Create scheduling message
+        schedule_msg = create_interactive_message(
+            recipient=self.recipient,
+            body_text="בחר/י את המועד המתאים לך:",
+            header_text="תיאום שיחת טלפון 📞",
+            footer_text="נשמח לשוחח איתך ולענות על כל השאלות!",
+            buttons=available_slots
+        )
+        messages.append(schedule_msg)
+        
+        return messages

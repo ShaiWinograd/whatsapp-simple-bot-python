@@ -33,6 +33,13 @@ class InteractiveMessageHandler(MessageHandlerBase):
         print("\nHandling interactive message...")
         print("Full message:", message)
 
+        # Check for existing conversation first for non-interactive messages
+        if message.get('type') not in ['interactive', 'reply']:
+            conversation_response = self.check_existing_conversation(recipient, message)
+            if conversation_response is not None:
+                return conversation_response
+            return [self.create_welcome_payload(recipient)]
+
         # Extract button selection from interactive message
         selected_option = None
         if 'interactive' in message:
