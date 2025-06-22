@@ -1,6 +1,6 @@
 """Core message processing logic for WhatsApp bot."""
 from typing import Dict, Any, List
-from .validators import MessageValidator
+from ..utils.validators import validate_sender
 from .router import MessageRouter
 from .conversation_manager import ConversationManager
 from ..services.service_factory import ServiceFactory
@@ -17,7 +17,6 @@ class MessageHandler:
             conversation_manager (ConversationManager): Manager for user conversations
             service_factory (ServiceFactory): Factory for creating service instances
         """
-        self.validator = MessageValidator()
         self.router = MessageRouter(conversation_manager, service_factory)
 
     def process_message(self, message: Dict[str, Any]) -> List[Dict[str, Any]]:
@@ -31,7 +30,7 @@ class MessageHandler:
             List[Dict[str, Any]]: List of message payloads to send or empty list if no response needed
         """
         # Validate incoming message
-        if not self.validator.validate_message(message):
+        if not validate_sender(message):
             return []
 
         # Create base payload with sender's number
