@@ -2,8 +2,9 @@
 from typing import List, Dict, Any
 
 from .base_service import BaseConversationService
-from ..config.responses import SERVICE_RESPONSES
+from ..config.responses import SERVICE_RESPONSES, WHATSAPP_LABELS
 from ..models.webhook_payload import TextMessagePayload, InteractiveMessagePayload
+from ..utils.whatsapp_client import WhatsAppClient
 
 
 class HumanSupportService(BaseConversationService):
@@ -22,6 +23,20 @@ class HumanSupportService(BaseConversationService):
     def handle_initial_message(self) -> List[Dict[str, Any]]:
         """Handle the initial message for human support request."""
         self.state = 'completed'  # Immediately complete since we're transferring to human
+        
+        # Update labels: remove bot conversation label and add waiting human support label
+        if WHATSAPP_LABELS['waiting_human_support']:
+            WhatsAppClient.apply_label(
+                self.recipient,
+                WHATSAPP_LABELS['waiting_human_support']
+            )
+            
+        if WHATSAPP_LABELS['bot new conversation']:
+            WhatsAppClient.remove_label(
+                self.recipient,
+                WHATSAPP_LABELS['bot new conversation']
+            )
+        
         return [
             TextMessagePayload(
                 to=self.recipient,
