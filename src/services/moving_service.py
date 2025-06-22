@@ -115,7 +115,7 @@ class MovingService(BaseConversationService):
         elif current_state == "awaiting_verification":
             button_title = get_button_title(message)
             
-            if button_title == 'כן, הפרטים נכונים':
+            if button_title == 'כן, הפרטים נכונים ✅':
                 self.set_conversation_state("awaiting_photos")
                 photo_msg = self.create_text_message(responses['photo_requirement']['message'])
                 
@@ -123,12 +123,12 @@ class MovingService(BaseConversationService):
                 photo_options = create_interactive_message(
                     recipient=self.recipient,
                     body_text=responses['photo_requirement']['options']['title'],
-                    header_text="📸 שליחת תמונות",
+                    header_text="שליחת תמונות 📸",
                     footer_text="התמונות יעזרו לנו להעריך את היקף העבודה",
                     buttons=[{"id": str(i), "title": btn} for i, btn in enumerate(responses['photo_requirement']['options']['buttons'])]
                 )
                 return [photo_msg, photo_options]
-            elif button_title == 'לא, צריך לתקן':
+            elif button_title == 'לא, צריך לתקן ❌':
                 self.set_conversation_state("awaiting_customer_details")
                 # Reset details and show appropriate message based on service type
                 self.customer_details = None
@@ -138,28 +138,13 @@ class MovingService(BaseConversationService):
                 quote_config = responses['price_quote'][quote_type if quote_type == 'both' else f"{quote_type}_only"]
                 
                 # Create interactive message with header and footer
-                quote_msg = {
-                    'type': 'interactive',
-                    'interactive': {
-                        'type': 'button',
-                        'header': {
-                            'type': 'text',
-                            'text': quote_config['header']
-                        },
-                        'body': {
-                            'text': quote_config['body']
-                        },
-                        'footer': {
-                            'text': quote_config['footer']
-                        },
-                        'action': {
-                            'buttons': [
-                                {'type': 'reply', 'reply': {'id': 'main_menu', 'title': button}}
-                                for button in quote_config['buttons']
-                            ]
-                        }
-                    }
-                }
+                quote_msg = create_interactive_message(
+                    recipient=self.recipient,
+                    body_text=quote_config['body'],
+                    header_text=quote_config['header'],
+                    footer_text=quote_config['footer'],
+                    buttons=[{"id": str(i), "title": btn} for i, btn in enumerate(quote_config['buttons'])]
+                )
                 return [quote_msg]
 
         elif current_state == "awaiting_photos":
@@ -172,7 +157,7 @@ class MovingService(BaseConversationService):
             location_options = create_interactive_message(
                 recipient=self.recipient,
                 body_text=move_responses['options']['title'],
-                header_text="🌍 סוג המעבר",
+                header_text="סוג המעבר 🌍",
                 footer_text="בחר/י את סוג המעבר המתאים",
                 buttons=[{"id": str(i), "title": btn} for i, btn in enumerate(move_responses['options']['buttons'])]
             )
@@ -206,7 +191,7 @@ class MovingService(BaseConversationService):
             schedule_msg = create_interactive_message(
                 recipient=self.recipient,
                 body_text=completion_responses['schedule']['title'],
-                header_text="📅 תיאום פגישה",
+                header_text="תיאום פגישה 📅",
                 footer_text="נשמח לקבוע זמן שנוח לך!",
                 buttons=[{"id": str(i), "title": btn} for i, btn in enumerate(completion_responses['schedule']['buttons'])]
             )
