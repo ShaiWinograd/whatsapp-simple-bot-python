@@ -61,3 +61,12 @@ class ConversationManager:
         for user_id in stale_users:
             self.conversations.pop(user_id, None)
             self.last_activity.pop(user_id, None)
+            
+    def remove_conversation(self, user_id: str) -> None:
+        """Remove a conversation for a specific user.
+        
+        Args:
+            user_id (str): Unique identifier for the user
+        """
+        self.conversations.pop(user_id, None)
+        self.last_activity.pop(user_id, None)

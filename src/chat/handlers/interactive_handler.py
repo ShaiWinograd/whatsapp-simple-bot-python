@@ -66,13 +66,18 @@ class InteractiveMessageHandler(BaseMessageHandler):
         elif 'reply' in message and message.get('reply', {}).get('type') == 'buttons_reply':
             selected_option = message.get('reply', {}).get('buttons_reply', {}).get('title', '')
 
+        # Check if user wants to return to main menu
+        if selected_option == 'חזרה לתפריט הראשי':
+            self.conversation_manager.remove_conversation(recipient)
+            return self.create_welcome_messages(recipient)
+
         # Check if user wants to switch to human support from any service
         if selected_option == 'אשמח לדבר עם נציג/ה':
             service = self.service_factory.create(ServiceType.HUMAN_SUPPORT, recipient)
             self.conversation_manager.add_conversation(recipient, service)
             return service.handle_initial_message()
 
-        # Check for existing conversation if not switching to human support
+        # Check for existing conversation if not returning to main menu or switching to human support
         conversation_response = self.check_existing_conversation(recipient, message)
         if conversation_response is not None:
             return conversation_response
