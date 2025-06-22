@@ -22,31 +22,68 @@ message_handler = MessageHandler(conversation_manager, service_factory)
 
 app = Flask(__name__)
 
-# The Webhook link to your server is set in the dashboard. For this script it is important that the link is in the format: {link to server}/hook.
+def _validate_webhook_data(data):
+    """Validate incoming webhook data and check for status updates.
+    Args:
+        data (dict): The webhook request data to validate.
+    Returns:
+        Tuple: (early_response, status_code, messages)
+    """
+    if data.get('event', {}).get('type') == 'statuses':
+        return 'Status update received', 200, None
+    
+    messages = data.get('messages', [])
+    if not messages:
+        return 'No messages to process', 200, None
+    
+    return None, None, messages
+
+def _send_message_responses(payloads):
+    """Send message responses and handle any sending errors.
+    Args:
+        payloads (list): List of payloads to send.
+    """
+    for payload in payloads:
+        print(f"Full payload: {payload}\n")  # Log complete payload
+        response = WhatsAppClient.send_message(payload)
+        print(f"API Response: {response}\n")
+
+def _handle_error(e, request_data):
+    """Handle and format error responses.
+    Args:
+        e (Exception): The exception that occurred.
+        request_data (dict): The request data that caused the error.
+    Returns:
+        Tuple: (error_response, status_code)
+    """
+    error_details = {
+        'error': str(e),
+        'message_data': request_data
+    }
+    print(f"Error details: {error_details}\n")
+    return jsonify(error_details), 500
+
 @app.route('/hook', methods=['POST'])
 def handle_new_messages():
+    """Main webhook handler for processing new messages.
+    Returns:
+        Response: JSON response indicating success or failure.
+    """
     try:
-        # Log incoming webhook data
-        print("Received webhook data:", request.json)
+        data = request.json
+        print("Received webhook data:", data)
         
-        # Check if this is a status update
-        if request.json.get('event', {}).get('type') == 'statuses':
-            return 'Status update received', 200
+        # Validate webhook data
+        early_response, status_code, messages = _validate_webhook_data(data)
+        if early_response:
+            return early_response, status_code
             
-        messages = request.json.get('messages', [])
-        if not messages:
-            return 'No messages to process', 200
-            
+        # Process messages and send responses
         for message in messages:
-            # Process the message and get response payload
             payloads = message_handler.process_message(message)
             if payloads:
                 try:
-                    # Send each response in the list
-                    for payload in payloads:
-                        print(f"Full payload: {payload}\n")  # Log complete payload
-                        response = WhatsAppClient.send_message(payload)
-                        print(f"API Response: {response}\n")
+                    _send_message_responses(payloads)
                 except Exception as e:
                     print(f"Error sending message: {str(e)}\n")
                     raise
@@ -54,12 +91,7 @@ def handle_new_messages():
         return jsonify({"status": "success"}), 200
     
     except Exception as e:
-        error_details = {
-            'error': str(e),
-            'message_data': request.json
-        }
-        print(f"Error details: {error_details}\n")
-        return jsonify(error_details), 500
+        return _handle_error(e, request.json)
 
 @app.route('/', methods=['GET'])
 def index():
