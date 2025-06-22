@@ -1,12 +1,12 @@
 """Services module for handling different conversation flows."""
 from typing import Optional, Dict, Type
+from .base_service import BaseConversationService
+from .moving_service import MovingService
+from .organization_service import OrganizationService
+from .design_service import DesignService
+from .consultation_service import ConsultationService
+from .other_service import OtherService
 
-from src.services.base_service import BaseConversationService
-from src.services.moving_service import MovingService
-from src.services.organization_service import OrganizationService
-from src.services.design_service import DesignService
-from src.services.consultation_service import ConsultationService
-from src.services.other_service import OtherService
 
 
 # Map of service names to their corresponding classes

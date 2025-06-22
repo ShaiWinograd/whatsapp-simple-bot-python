@@ -1,9 +1,9 @@
 """Service for handling moving home conversation flow."""
 from typing import List, Dict, Any
+from ..models.webhook_payload import InteractiveMessagePayload
+from .base_service import BaseConversationService
+from ..config.responses import SERVICE_RESPONSES, GENERAL_RESPONSES
 
-from webhook_payload import InteractiveMessagePayload
-from src.services.base_service import BaseConversationService
-from src.config.responses import SERVICE_RESPONSES, GENERAL_RESPONSES
 
 
 class MovingService(BaseConversationService):

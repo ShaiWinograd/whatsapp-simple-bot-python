@@ -1,9 +1,8 @@
 from flask import Flask, request, jsonify
 import os
 from dotenv import load_dotenv
-from src.message_handler import MessageHandler
+from src.chat import MessageHandler, ConversationManager
 from src.utils.whatsapp_client import WhatsAppClient
-from src.conversation_manager import ConversationManager
 from src.services.service_factory import ServiceFactory, ServiceType
 from src.services.organization_service import OrganizationService
 from src.services.design_service import DesignService

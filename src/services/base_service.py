@@ -1,9 +1,9 @@
 """Base service class for handling conversation flows."""
 from abc import ABC, abstractmethod
 from typing import List, Dict, Any
+from ..utils.whatsapp_client import WhatsAppClient
+from ..models.webhook_payload import TextMessagePayload
 
-from src.utils.whatsapp_client import WhatsAppClient
-from webhook_payload import TextMessagePayload
 
 
 class BaseConversationService(ABC):

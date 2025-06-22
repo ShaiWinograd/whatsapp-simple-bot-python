@@ -1,6 +1,6 @@
 from dependency_injector import containers, providers
-from src.conversation_manager import ConversationManager
-from src.services.service_factory import ServiceFactory
+from ..chat import ConversationManager
+from ..services.service_factory import ServiceFactory
 
 class Container(containers.DeclarativeContainer):
     config = providers.Configuration()

@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 from typing import Dict, Optional
 
-from src.services.base_service import BaseConversationService
+from ..services.base_service import BaseConversationService
 
 class ConversationManager:
     def __init__(self, timeout_minutes: int = 300): # Default timeout of 300 minutes (5 hours)

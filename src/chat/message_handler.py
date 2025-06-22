@@ -1,14 +1,14 @@
 """Core message processing logic for WhatsApp bot."""
 from typing import List, Dict, Any
 from venv import logger
+from ..config.responses import RESPONSES, DEBUG_PHONE_NUMBER
+from .conversation_manager import ConversationManager
+from ..services.service_factory import ServiceFactory, ServiceType
+from ..utils.errors import ConversationError
+from ..utils.validators import validate_sender
+from ..services import create_service
+from ..models.webhook_payload import TextMessagePayload, InteractiveMessagePayload
 
-from src.config.responses import RESPONSES, DEBUG_PHONE_NUMBER
-from src.conversation_manager import ConversationManager
-from src.services.service_factory import ServiceFactory, ServiceType
-from src.utils.errors import ConversationError
-from src.utils.validators import validate_sender
-from src.services import create_service
-from webhook_payload import TextMessagePayload, InteractiveMessagePayload
 
 
 class MessageHandler:
@@ -43,9 +43,9 @@ class MessageHandler:
                 return service.handle_initial_message()
             except (ValueError, ConversationError) as e:
                 logger.error(f"Failed to create service: {e}")
-                return self.create_welcome_messages(recipient)
+                return MessageHandler.create_welcome_messages(recipient)
 
-        return self.create_welcome_messages(recipient)
+        return MessageHandler.create_welcome_messages(recipient)
     
 
     def handle_text_message(self, message: Dict[str, Any], base_payload: Dict[str, Any]) -> List[Dict[str, Any]]:
@@ -67,10 +67,11 @@ class MessageHandler:
             return service.handle_response(message)
 
         # For any other text message, show the welcome message
-        return self.create_welcome_messages(recipient)
+        return MessageHandler.create_welcome_messages(recipient)
     
 
-    def create_welcome_messages(self, recipient: str) -> List[Dict[str, Any]]:
+    @staticmethod
+    def create_welcome_messages(recipient: str) -> List[Dict[str, Any]]:
         """
         Create welcome and options messages.
         

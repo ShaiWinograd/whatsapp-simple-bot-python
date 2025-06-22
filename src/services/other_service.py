@@ -1,9 +1,9 @@
 """Service for handling other/non-work related inquiries."""
 from typing import List, Dict, Any
 
-from src.services.base_service import BaseConversationService
-from src.config.responses import SERVICE_RESPONSES
-from webhook_payload import TextMessagePayload, InteractiveMessagePayload
+from .base_service import BaseConversationService
+from ..config.responses import SERVICE_RESPONSES
+from ..models.webhook_payload import TextMessagePayload, InteractiveMessagePayload
 
 
 class OtherService(BaseConversationService):
@@ -63,8 +63,8 @@ class OtherService(BaseConversationService):
             )
             
             if button_reply == 'חזרה לתפריט הראשי':
-                from src.message_handler import create_welcome_messages
-                return create_welcome_messages(self.recipient)
+                from ..chat.message_handler import MessageHandler
+                return MessageHandler.create_welcome_messages(self.recipient)
             elif button_reply == 'הסבר על השירות הנדרש':
                 self.state = 'awaiting_callback'
                 return [
