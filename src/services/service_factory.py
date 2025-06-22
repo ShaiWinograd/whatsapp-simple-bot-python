@@ -6,7 +6,7 @@ from src.services.base_service import BaseConversationService
 class ServiceType(Enum):
     ORGANIZATION = "organization"
     MOVING = "moving"
-    OTHER = "other"
+    HUMAN_SUPPORT = "human_support"
 
 class ServiceFactory:
     _services: Dict[ServiceType, Type[BaseConversationService]] = {}

@@ -10,7 +10,7 @@ from ...utils.errors import ConversationError
 SERVICE_TYPE_MAPPING = {
     'מעבר דירה': ServiceType.MOVING,
     'סידור וארגון': ServiceType.ORGANIZATION,
-    'אחר': ServiceType.OTHER
+    'אשמח לדבר עם נציג/ה': ServiceType.HUMAN_SUPPORT
 }
 
 
@@ -58,7 +58,21 @@ class InteractiveMessageHandler(BaseMessageHandler):
         """
         recipient = base_payload["to"]
 
-        # Check for existing conversation first
+        # Get button selection if present
+        selected_option = None
+        if 'interactive' in message:
+            button_reply = message.get('interactive', {}).get('button_reply', {})
+            selected_option = button_reply.get('title', '')
+        elif 'reply' in message and message.get('reply', {}).get('type') == 'buttons_reply':
+            selected_option = message.get('reply', {}).get('buttons_reply', {}).get('title', '')
+
+        # Check if user wants to switch to human support from any service
+        if selected_option == 'אשמח לדבר עם נציג/ה':
+            service = self.service_factory.create(ServiceType.HUMAN_SUPPORT, recipient)
+            self.conversation_manager.add_conversation(recipient, service)
+            return service.handle_initial_message()
+
+        # Check for existing conversation if not switching to human support
         conversation_response = self.check_existing_conversation(recipient, message)
         if conversation_response is not None:
             return conversation_response

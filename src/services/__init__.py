@@ -5,7 +5,7 @@ from .moving_service import MovingService
 from .organization_service import OrganizationService
 from .design_service import DesignService
 from .consultation_service import ConsultationService
-from .other_service import OtherService
+from .human_service import HumanSupportService
 
 
 
@@ -13,7 +13,7 @@ from .other_service import OtherService
 SERVICE_MAP: Dict[str, Type[BaseConversationService]] = {
     "מעבר דירה": MovingService,
     "סידור וארגון": OrganizationService,
-    "אחר": OtherService
+    "אשמח לדבר עם נציג/ה": HumanSupportService
 }
 
 
@@ -39,6 +39,6 @@ __all__ = [
     'BaseConversationService',
     'MovingService',
     'OrganizationService',
-    'OtherService',
+    'HumanSupportService',
     'create_service'
 ]

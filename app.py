@@ -6,14 +6,14 @@ from src.utils.whatsapp_client import WhatsAppClient
 from src.services.service_factory import ServiceFactory, ServiceType
 from src.services.organization_service import OrganizationService
 from src.services.moving_service import MovingService
-from src.services.other_service import OtherService
+from src.services.human_service import HumanSupportService
 
 load_dotenv()  # Load environment variables from a .env file
 
 # Register service implementations
 ServiceFactory.register(ServiceType.ORGANIZATION, OrganizationService)
 ServiceFactory.register(ServiceType.MOVING, MovingService)
-ServiceFactory.register(ServiceType.OTHER, OtherService)
+ServiceFactory.register(ServiceType.HUMAN_SUPPORT, HumanSupportService)
 
 # Initialize the message handler with its dependencies
 conversation_manager = ConversationManager()
