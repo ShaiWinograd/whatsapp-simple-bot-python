@@ -6,6 +6,13 @@ from ...config.responses import RESPONSES
 from ...services.service_factory import ServiceType
 from ...utils.errors import ConversationError
 
+# Mapping between Hebrew button titles and ServiceType enum values
+SERVICE_TYPE_MAPPING = {
+    'מעבר דירה': ServiceType.MOVING,
+    'סידור וארגון': ServiceType.ORGANIZATION,
+    'אחר': ServiceType.OTHER
+}
+
 
 class InteractiveMessageHandler(BaseMessageHandler):
     """Handler for interactive messages and button replies."""
@@ -26,11 +33,15 @@ class InteractiveMessageHandler(BaseMessageHandler):
             return self.create_welcome_messages(recipient)
 
         try:
-            service_type = ServiceType(button_title)
+            service_type = SERVICE_TYPE_MAPPING.get(button_title)
+            if service_type is None:
+                logger.error(f"No service type mapping found for button title: {button_title}")
+                return self.create_welcome_messages(recipient)
+                
             service = self.service_factory.create(service_type, recipient)
             self.conversation_manager.add_conversation(recipient, service)
             return service.handle_initial_message()
-        except (ValueError, ConversationError) as e:
+        except ConversationError as e:
             logger.error(f"Failed to create service: {e}")
             return self.create_welcome_messages(recipient)
 
@@ -55,15 +66,15 @@ class InteractiveMessageHandler(BaseMessageHandler):
         # Handle regular interactive message
         if 'interactive' in message:
             button_reply = message.get('interactive', {}).get('button_reply', {})
-            selected_option = button_reply.get('id', '')
+            selected_option = button_reply.get('title', '')  # Use title instead of id
             
-            if selected_option in RESPONSES['options']:
+            if selected_option in SERVICE_TYPE_MAPPING:
                 try:
-                    service_type = ServiceType(selected_option)
+                    service_type = SERVICE_TYPE_MAPPING[selected_option]
                     service = self.service_factory.create(service_type, recipient)
                     self.conversation_manager.add_conversation(recipient, service)
                     return service.handle_initial_message()
-                except (ValueError, ConversationError) as e:
+                except ConversationError as e:
                     logger.error(f"Failed to create service: {e}")
                     return self.create_welcome_messages(recipient)
 
