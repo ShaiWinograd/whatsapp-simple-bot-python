@@ -92,11 +92,33 @@ PHOTO_REQUIREMENT = {
 }
 
 COMPLETION = {
-    'after_media': """כדי להשלים את תהליך קבלת הצעת המחיר, נצטרך לקיים שיחת טלפון קצרה עם אחד מנציגי התמיכה שלנו."
-            "\n\nנציגינו זמינים בימים ראשון עד חמישי בשעות הבאות:"
-            "\nימים ראשון, שלישי ורביעי: 10:00-12:00"
-            "\nימים שני וחמישי: 17:00-19:00"
-            "\n\nאנא בחר/י מועד מתאים מהאפשרויות הבאות:"""
+    'after_media': """כדי להשלים את תהלית קבלת הצעת המחיר, נצטרך לקיים איתכם שיחת טלפון קצרה.
+על מנת שנתקשר אליכם בזמן מתאים אנא בחרו את אחח מהמועדים המופיעים מטה"""
+}
+
+SERVICE = {
+    'name': 'מעבר דירה'
+}
+
+VERIFY = {
+    'header': '✅ אימות פרטים',
+    'footer': 'אנא אשר/י שהפרטים נכונים'
+}
+
+PHOTOS = {
+    'header': 'שליחת תמונות 📸',
+    'footer': 'התמונות יעזרו לנו להעריך את היקף העבודה'
+}
+
+SCHEDULING = {
+    'header': 'תיאום שיחת טלפון 📞',
+    'footer': ''
+}
+
+FALLBACK = {
+    'header': '✅ הפניה התקבלה',
+    'body': 'תודה על הפניה. נציג שלנו יחזור אליכם בהקדם.',
+    'footer': ''
 }
 
 # Export all responses
@@ -105,5 +127,10 @@ RESPONSES = {
     'price_quote': PRICE_QUOTE,
     'verify_details': VERIFY_DETAILS,
     'photo_requirement': PHOTO_REQUIREMENT,
-    'completed': COMPLETION
+    'completed': COMPLETION,
+    'verify': VERIFY,
+    'photos': PHOTOS,
+    'scheduling': SCHEDULING,
+    'fallback': FALLBACK,
+    'service_name': SERVICE['name']
 }

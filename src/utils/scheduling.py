@@ -69,7 +69,7 @@ def get_available_slots(current_time: datetime = None) -> List[Dict[str, str]]:
             time_range = availability[adjusted_weekday]
             slot = {
                 "id": str(len(available_slots)),
-                "title": f"{day_names[adjusted_weekday]}, {date.day}.{month_names[date.month]} בין {time_range}"
+                "title": f"{day_names[adjusted_weekday]}, {date.day} ב{month_names[date.month]} בין {time_range}"
             }
             print(f"DEBUG - Scheduling: Created slot {slot}")
             available_slots.append(slot)

@@ -20,7 +20,7 @@ class MovingService(BaseConversationService):
         self.responses = SERVICE_RESPONSES['moving']
 
     def get_service_name(self) -> str:
-        return "מעבר דירה"
+        return self.responses['service_name']
 
     def handle_initial_message(self) -> List[Dict[str, Any]]:
         """
@@ -57,8 +57,8 @@ class MovingService(BaseConversationService):
         photo_options = create_interactive_message(
             recipient=self.recipient,
             body_text=self.responses['photo_requirement']['options']['title'],
-            header_text="שליחת תמונות 📸",
-            footer_text="התמונות יעזרו לנו להעריך את היקף העבודה",
+            header_text=self.responses['photos']['header'],
+            footer_text=self.responses['photos']['footer'],
             buttons=[{"id": str(i), "title": btn} for i, btn in enumerate(self.responses['photo_requirement']['options']['buttons'])]
         )
         return [photo_msg, photo_options]
@@ -101,8 +101,8 @@ class MovingService(BaseConversationService):
             verify_options = create_interactive_message(
                 recipient=self.recipient,
                 body_text=self.responses['verify_details']['message'].format(details=self.customer_details),
-                header_text="✅ אימות פרטים",
-                footer_text="אנא אשר/י שהפרטים נכונים",
+                header_text=self.responses['verify']['header'],
+                footer_text=self.responses['verify']['footer'],
                 buttons=[{"id": str(i), "title": btn} for i, btn in enumerate(self.responses['verify_details']['options']['buttons'])]
             )
             # Set state to awaiting verification
@@ -158,8 +158,8 @@ class MovingService(BaseConversationService):
             create_interactive_message(
                 recipient=self.recipient,
                 body_text=self.responses['photo_requirement']['options']['title'],
-                header_text="שליחת תמונות 📸",
-                footer_text="התמונות יעזרו לנו להעריך את היקף העבודה",
+                header_text=self.responses['photos']['header'],
+                footer_text=self.responses['photos']['footer'],
                 buttons=[
                     {"id": "main_menu", "title": NAVIGATION['back_to_main']},
                     {"id": "support", "title": NAVIGATION['talk_to_representative']}
@@ -223,8 +223,8 @@ class MovingService(BaseConversationService):
             schedule_msg = create_interactive_message(
                 recipient=self.recipient,
                 body_text=completion_message,
-                header_text="תיאום שיחת טלפון 📞",
-                footer_text="",
+                header_text=self.responses['scheduling']['header'],
+                footer_text=self.responses['scheduling']['footer'],
                 buttons=available_slots
             )
             if not schedule_msg:
@@ -238,9 +238,9 @@ class MovingService(BaseConversationService):
             # Create a simpler fallback message without slots
             fallback_msg = create_interactive_message(
                 recipient=self.recipient,
-                body_text="תודה על הפניה. נציג שלנו יחזור אליכם בהקדם.",
-                header_text="✅ הפניה התקבלה",
-                footer_text="",
+                body_text=self.responses['fallback']['body'],
+                header_text=self.responses['fallback']['header'],
+                footer_text=self.responses['fallback']['footer'],
                 buttons=[
                     {"id": "0", "title": NAVIGATION['back_to_main']},
                     {"id": "1", "title": NAVIGATION['talk_to_representative']}
@@ -248,20 +248,3 @@ class MovingService(BaseConversationService):
             )
             return [fallback_msg]
         
-        # Add navigation options to the slots
-        available_slots.extend([
-            {"id": "main_menu", "title": NAVIGATION['back_to_main']},
-            {"id": "support", "title": NAVIGATION['talk_to_representative']}
-        ])
-        
-        # Create scheduling message
-        schedule_msg = create_interactive_message(
-            recipient=self.recipient,
-            body_text=completion_message,
-            header_text="תיאום שיחת טלפון 📞",
-            footer_text="",
-            buttons=available_slots
-        )
-        messages.append(schedule_msg)
-        
-        return messages
