@@ -56,8 +56,9 @@ def get_available_slots(current_time: datetime = None) -> List[Dict[str, str]]:
     }
     
     available_slots = []
-    date = current_time
-    print(f"DEBUG - Scheduling: Starting from date {date}")
+    # Start from tomorrow
+    date = current_time + timedelta(days=1)
+    print(f"DEBUG - Scheduling: Starting from date {date} (tomorrow)")
     
     while len(available_slots) < 5:
         weekday = date.weekday()  # Get day of week (0 = Monday)

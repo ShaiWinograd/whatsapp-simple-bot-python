@@ -24,7 +24,7 @@ API = {
 LABELS = {
     'bot_new_conversation': os.getenv('WHATSAPP_BOT_NEW_CONVERSATION_LABEL_ID', ''),
     'waiting_human_support': os.getenv('WHATSAPP_HUMAN_SUPPORT_LABEL_ID', ''),
-    'waiting_quote': os.getenv('WHATSAPP_WAITING_QUOTE_LABEL_ID', ''),
+    'waiting_call_before_quote': os.getenv('WHATSAPP_WAITING_CALL_BEFORE_QUOTE_LABEL_ID', ''),
 }
 
 # Debug phone number

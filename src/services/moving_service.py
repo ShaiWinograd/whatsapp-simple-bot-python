@@ -193,7 +193,7 @@ class MovingService(BaseConversationService):
             # Update labels silently
             print("DEBUG - Updating labels")
             WhatsAppClient.remove_label(self.recipient, LABELS['bot_new_conversation'])
-            WhatsAppClient.apply_label(self.recipient, LABELS['waiting_quote'])
+            WhatsAppClient.apply_label(self.recipient, LABELS['waiting_call_before_quote'])
             
             # Create final message explaining the phone call requirement
             print("DEBUG - Getting completion message from responses")

@@ -26,7 +26,8 @@ def create_interactive_message(
     print("\nCreating interactive payload for recipient:", recipient)
     
     # Use provided values or defaults from GENERAL
-    body = body_text or GENERAL['welcome_message']
+    # Combine intro and welcome message if using defaults
+    body = body_text or f"{GENERAL['intro']}\n\n{GENERAL['welcome_message']}"
     header = header_text or GENERAL['header']
     footer = footer_text or GENERAL['footer']
     button_list = buttons or [
