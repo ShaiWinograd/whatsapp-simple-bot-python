@@ -17,6 +17,7 @@ class MovingService(BaseConversationService):
         super().__init__(recipient)
         self.service_type = None
         self.customer_details = None
+        self.responses = SERVICE_RESPONSES['moving']
 
     def get_service_name(self) -> str:
         return "מעבר דירה"
@@ -30,20 +31,20 @@ class MovingService(BaseConversationService):
         """
         self.set_conversation_state("awaiting_packing_choice")
         print("\nCreating initial moving service message...")
-        responses = SERVICE_RESPONSES['moving']['initial']
+        initial_response = self.responses['initial']
         
         # Create list of button data
         buttons = [
             {"id": str(idx), "title": button}
-            for idx, button in enumerate(responses['options']['buttons'])
+            for idx, button in enumerate(initial_response['options']['buttons'])
         ]
         print(f"Created button data: {buttons}")
 
         payload = create_interactive_message(
             recipient=self.recipient,
-            body_text=responses['welcome'],
-            header_text=responses['header'],
-            footer_text=responses['footer'],
+            body_text=initial_response['welcome'],
+            header_text=initial_response['header'],
+            footer_text=initial_response['footer'],
             buttons=buttons
         )
         print(f"Created initial moving service payload: {payload}")
@@ -52,22 +53,20 @@ class MovingService(BaseConversationService):
 
     def _create_photo_requirement_message(self) -> List[Dict[str, Any]]:
         """Create photo requirement messages with options."""
-        responses = SERVICE_RESPONSES['moving']
-        photo_msg = self.create_text_message(responses['photo_requirement']['message'])
+        photo_msg = self.create_text_message(self.responses['photo_requirement']['message'])
         photo_options = create_interactive_message(
             recipient=self.recipient,
-            body_text=responses['photo_requirement']['options']['title'],
+            body_text=self.responses['photo_requirement']['options']['title'],
             header_text="שליחת תמונות 📸",
             footer_text="התמונות יעזרו לנו להעריך את היקף העבודה",
-            buttons=[{"id": str(i), "title": btn} for i, btn in enumerate(responses['photo_requirement']['options']['buttons'])]
+            buttons=[{"id": str(i), "title": btn} for i, btn in enumerate(self.responses['photo_requirement']['options']['buttons'])]
         )
         return [photo_msg, photo_options]
 
     def _create_quote_message(self) -> Dict[str, Any]:
         """Create quote message based on service type."""
-        responses = SERVICE_RESPONSES['moving']
         quote_type = self.service_type
-        quote_config = responses['price_quote'][quote_type if quote_type == 'both' else f"{quote_type}_only"]
+        quote_config = self.responses['price_quote'][quote_type if quote_type == 'both' else f"{quote_type}_only"]
         
         return create_interactive_message(
             recipient=self.recipient,
@@ -99,13 +98,12 @@ class MovingService(BaseConversationService):
         if text:
             # Save the details and create verification message
             self.customer_details = text
-            responses = SERVICE_RESPONSES['moving']
             verify_options = create_interactive_message(
                 recipient=self.recipient,
-                body_text=responses['verify_details']['message'].format(details=self.customer_details),
+                body_text=self.responses['verify_details']['message'].format(details=self.customer_details),
                 header_text="✅ אימות פרטים",
                 footer_text="אנא אשר/י שהפרטים נכונים",
-                buttons=[{"id": str(i), "title": btn} for i, btn in enumerate(responses['verify_details']['options']['buttons'])]
+                buttons=[{"id": str(i), "title": btn} for i, btn in enumerate(self.responses['verify_details']['options']['buttons'])]
             )
             # Set state to awaiting verification
             self.set_conversation_state("awaiting_verification")
@@ -136,26 +134,30 @@ class MovingService(BaseConversationService):
         
         # Handle navigation buttons first
         button_title = get_button_title(message)
-        if button_title in [NAVIGATION['back_to_main'], NAVIGATION['talk_to_representative']]:
-            return []
-
-        responses = SERVICE_RESPONSES['moving']
+        if button_title == NAVIGATION['back_to_main']:
+            return self.handle_initial_message()
+        elif button_title == NAVIGATION['talk_to_representative']:
+            return []  # Will be handled by parent service
         
         # Check message type directly from root
         message_type = message.get('type', '')
         
         if message_type in ['image', 'video']:
+            print("DEBUG - Image received, creating completion messages")
             self.set_conversation_state("completed")
-            messages = [self.create_text_message(responses['completed']['after_media'])]
-            messages.extend(self._create_completion_messages())
-            return messages
+            # Create scheduling message with available slots
+            completion_messages = self._create_completion_messages()
+            if not completion_messages:  # If completion messages failed
+                print("ERROR - Failed to create completion messages")
+                return [self.create_text_message(GENERAL['error'])]
+            return completion_messages
             
         # If not an image/video, remind about photos and show navigation options
         return [
-            self.create_text_message(responses['photo_requirement']['message']),
+            self.create_text_message(self.responses['photo_requirement']['message']),
             create_interactive_message(
                 recipient=self.recipient,
-                body_text=responses['photo_requirement']['options']['title'],
+                body_text=self.responses['photo_requirement']['options']['title'],
                 header_text="שליחת תמונות 📸",
                 footer_text="התמונות יעזרו לנו להעריך את היקף העבודה",
                 buttons=[
@@ -171,7 +173,8 @@ class MovingService(BaseConversationService):
             "awaiting_packing_choice": self._handle_packing_choice,
             "awaiting_customer_details": self._handle_customer_details,
             "awaiting_verification": self._handle_verification,
-            "awaiting_photos": self._handle_photos
+            "awaiting_photos": self._handle_photos,
+            "completed": lambda _: []  # Return empty list when completed to avoid further messages
         }
         
         current_state = self.get_conversation_state()
@@ -181,19 +184,69 @@ class MovingService(BaseConversationService):
             return handler(message)
         return [self.create_text_message(GENERAL['error'])]
 
-    def _create_completion_messages(self, responses) -> List[Dict[str, Any]]:
+    def _create_completion_messages(self) -> List[Dict[str, Any]]:
         """Helper method to create completion messages."""
+        print("DEBUG - Starting to create completion messages")
         messages = []
         
-        # Update labels silently
-        WhatsAppClient.remove_label(self.recipient, LABELS['bot_new_conversation'])
-        WhatsAppClient.apply_label(self.recipient, LABELS['waiting_quote'])
-        
-        # Create final message explaining the phone call requirement
-        completion_responses = responses['completion']['after_media']
+        try:
+            # Update labels silently
+            print("DEBUG - Updating labels")
+            WhatsAppClient.remove_label(self.recipient, LABELS['bot_new_conversation'])
+            WhatsAppClient.apply_label(self.recipient, LABELS['waiting_quote'])
+            
+            # Create final message explaining the phone call requirement
+            print("DEBUG - Getting completion message from responses")
+            print(f"DEBUG - Available response keys: {list(self.responses.keys())}")
+            completion_message = self.responses['completed']['after_media']
+            if not completion_message:
+                raise ValueError("Completion message is empty")
+            print(f"DEBUG - Got completion message: {completion_message[:50]}...")
 
-        # Get dynamic slots
-        available_slots = get_available_slots()
+            # Get dynamic slots
+            print("DEBUG - Getting available slots")
+            available_slots = get_available_slots()
+            if not available_slots:
+                raise ValueError("No available slots returned")
+            print(f"DEBUG - Got {len(available_slots)} available slots")
+
+            # Add navigation options to the slots
+            print("DEBUG - Adding navigation options to slots")
+            available_slots.extend([
+                {"id": "main_menu", "title": NAVIGATION['back_to_main']},
+                {"id": "support", "title": NAVIGATION['talk_to_representative']}
+            ])
+            print(f"DEBUG - Total buttons after adding navigation: {len(available_slots)}")
+
+            # Create scheduling message
+            print("DEBUG - Creating interactive message")
+            schedule_msg = create_interactive_message(
+                recipient=self.recipient,
+                body_text=completion_message,
+                header_text="תיאום שיחת טלפון 📞",
+                footer_text="",
+                buttons=available_slots
+            )
+            if not schedule_msg:
+                raise ValueError("Failed to create interactive message")
+            messages.append(schedule_msg)
+            
+            print("DEBUG - Successfully created completion messages")
+            return messages
+        except Exception as e:
+            print(f"ERROR in _create_completion_messages: {e}")
+            # Create a simpler fallback message without slots
+            fallback_msg = create_interactive_message(
+                recipient=self.recipient,
+                body_text="תודה על הפניה. נציג שלנו יחזור אליכם בהקדם.",
+                header_text="✅ הפניה התקבלה",
+                footer_text="",
+                buttons=[
+                    {"id": "0", "title": NAVIGATION['back_to_main']},
+                    {"id": "1", "title": NAVIGATION['talk_to_representative']}
+                ]
+            )
+            return [fallback_msg]
         
         # Add navigation options to the slots
         available_slots.extend([
@@ -204,7 +257,7 @@ class MovingService(BaseConversationService):
         # Create scheduling message
         schedule_msg = create_interactive_message(
             recipient=self.recipient,
-            body_text=completion_responses,
+            body_text=completion_message,
             header_text="תיאום שיחת טלפון 📞",
             footer_text="",
             buttons=available_slots

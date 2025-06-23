@@ -57,11 +57,13 @@ def get_available_slots(current_time: datetime = None) -> List[Dict[str, str]]:
     
     available_slots = []
     date = current_time
+    print(f"DEBUG - Scheduling: Starting from date {date}")
     
     while len(available_slots) < 5:
         weekday = date.weekday()  # Get day of week (0 = Monday)
         # Convert to Sunday = 6, Monday = 0, etc.
         adjusted_weekday = 6 if weekday == 6 else weekday
+        print(f"DEBUG - Scheduling: Checking day {adjusted_weekday} ({day_names[adjusted_weekday]})")
         
         if availability[adjusted_weekday]:
             time_range = availability[adjusted_weekday]
@@ -69,8 +71,13 @@ def get_available_slots(current_time: datetime = None) -> List[Dict[str, str]]:
                 "id": str(len(available_slots)),
                 "title": f"{day_names[adjusted_weekday]}, {date.day}.{month_names[date.month]} בין {time_range}"
             }
+            print(f"DEBUG - Scheduling: Created slot {slot}")
             available_slots.append(slot)
+        else:
+            print(f"DEBUG - Scheduling: No availability for {day_names[adjusted_weekday]}")
         
         date += timedelta(days=1)
+    
+    print(f"DEBUG - Scheduling: Final slots: {available_slots}")
     
     return available_slots

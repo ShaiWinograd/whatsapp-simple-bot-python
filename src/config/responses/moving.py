@@ -84,6 +84,7 @@ PHOTO_REQUIREMENT = {
     'options': {
         'title': 'בחר/י אפשרות:',
         'buttons': [
+            'מעדיפים לוותר על שליחת תמונות',
             NAVIGATION['back_to_main'],
             NAVIGATION['talk_to_representative']
         ]

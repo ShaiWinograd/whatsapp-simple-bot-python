@@ -1,6 +1,6 @@
 """Message routing functionality."""
 from typing import Dict, Any, List
-from .handlers import TextMessageHandler, InteractiveMessageHandler
+from .handlers import TextMessageHandler, InteractiveMessageHandler, ImageMessageHandler, VideoMessageHandler
 from ..services.service_factory import ServiceFactory
 from .conversation_manager import ConversationManager
 
@@ -12,7 +12,9 @@ class MessageRouter:
         self.handlers = {
             'text': TextMessageHandler(conversation_manager, service_factory),
             'interactive': InteractiveMessageHandler(conversation_manager, service_factory),
-            'reply': InteractiveMessageHandler(conversation_manager, service_factory)
+            'reply': InteractiveMessageHandler(conversation_manager, service_factory),
+            'image': ImageMessageHandler(conversation_manager, service_factory),
+            'video': VideoMessageHandler(conversation_manager, service_factory)
         }
         
     def route_message(self, message: Dict[str, Any], base_payload: Dict[str, Any]) -> List[Dict[str, Any]]:
