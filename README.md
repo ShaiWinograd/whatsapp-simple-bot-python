@@ -13,7 +13,10 @@ whatsapp-simple-bot-python/
 │   │   └── message_handler.py       # Message processing
 │   ├── config/            # Configuration files
 │   │   ├── __init__.py
-│   │   └── responses.py   # Message responses and API config
+│   │   └── responses/     # Message responses
+│   │       ├── moving.py
+│   │       ├── common.py
+│   │       └── organization.py
 │   ├── models/            # Data models
 │   │   ├── __init__.py
 │   │   └── webhook_payload.py  # Webhook payload models
@@ -22,7 +25,6 @@ whatsapp-simple-bot-python/
 │   │   ├── base_service.py
 │   │   ├── moving_service.py
 │   │   ├── organization_service.py
-│   │   ├── other_service.py
 │   │   └── service_factory.py
 │   ├── utils/             # Utility functions
 │   │   ├── __init__.py
@@ -34,6 +36,7 @@ whatsapp-simple-bot-python/
 ├── assets/                # Media assets
 │   └── media/            
 ├── docs/                  # Documentation
+│   └── moving_service_flow.md  # Moving service documentation
 ├── app.py                 # Flask application entry point
 ├── requirements.txt       # Project dependencies
 └── .env.template          # Environment variables template
@@ -62,18 +65,44 @@ The bot will start running on `http://localhost:8080`.
 
 ## Features
 
+### Core Features
 - Modular and maintainable code structure
-- Service-based architecture for business functions:
-  - Moving service: Handles moving-related inquiries and bookings
-  - Organization service: Manages organization and storage solutions
-  - Additional services planned for future implementation
 - Conversation state management
 - Configurable message responses
-- Early message validation to improve efficiency
+- Early message validation
 - Robust error handling
-- Webhook endpoint for WhatsApp Cloud API integration
-- Dependency injection for better testability
 - Media message support
+- Interactive buttons and dynamic responses
+- Appointment scheduling system
+
+### Services
+
+#### Moving Service
+Complete moving assistance with the following features:
+- Multiple service options:
+  - Packing only
+  - Unpacking only
+  - Combined packing and unpacking
+- Detailed information collection
+- Photo/video support for accurate quotes
+- Automated scheduling system
+- State-based conversation flow
+See `docs/moving_service_flow.md` for detailed flow documentation.
+
+#### Organization Service
+Storage and organization solutions:
+- Home organization consulting
+- Storage optimization
+- Custom organization solutions
+
+### Technical Features
+- Service-based architecture
+- State machine for conversation flows
+- WhatsApp Cloud API integration
+- Dependency injection for better testability
+- Comprehensive error handling
+- Media message processing
+- Dynamic scheduling system
 
 ## Webhook Configuration
 
@@ -91,8 +120,17 @@ https://your-domain.com/hook
 5. Conversation manager updates chat state
 6. WhatsApp client sends response back to user
 
-Each component is designed to be modular and maintainable, with clear separation of concerns:
-- Services handle specific business logic
-- Conversation manager tracks chat state
-- Message handler routes messages to appropriate services
-- WhatsApp client handles API communication
+### Component Responsibilities
+
+- **Services**: Handle specific business logic and maintain conversation flow
+- **Conversation Manager**: Tracks and updates chat state
+- **Message Handler**: Routes messages to appropriate services
+- **WhatsApp Client**: Manages API communication
+- **Validators**: Ensure message integrity and authorization
+- **Interactive Message Builder**: Creates dynamic button-based responses
+
+## Documentation
+
+- Service-specific documentation can be found in the `docs/` directory
+- Each service has its own detailed flow documentation
+- See `moving_service_flow.md` for the complete moving service workflow

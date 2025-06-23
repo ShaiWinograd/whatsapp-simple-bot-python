@@ -124,8 +124,11 @@ class MovingService(BaseConversationService):
             self.customer_details = None
             # Set state back to awaiting details
             self.set_conversation_state("awaiting_customer_details")
-            # Send the quote message again
-            return [self._create_quote_message()]
+            # Send message about rewriting details and then the quote message
+            return [
+                self.create_text_message("אנא כתבו שוב את כל הפרטים:"),
+                self._create_quote_message()
+            ]
         return [self.create_text_message(GENERAL['error'])]
 
     def _handle_photos(self, message: Dict[str, Any]) -> List[Dict[str, Any]]:
@@ -138,21 +141,19 @@ class MovingService(BaseConversationService):
             return self.handle_initial_message()
         elif button_title == NAVIGATION['talk_to_representative']:
             return []  # Will be handled by parent service
+        elif button_title == 'מעדיפים לוותר על שליחת תמונות':
+            # Proceed to slot selection without photos
+            print("DEBUG - User opted to skip photos, creating completion messages")
+            return self._create_completion_messages()
         
         # Check message type directly from root
         message_type = message.get('type', '')
         
         if message_type in ['image', 'video']:
             print("DEBUG - Image received, creating completion messages")
-            self.set_conversation_state("completed")
-            # Create scheduling message with available slots
-            completion_messages = self._create_completion_messages()
-            if not completion_messages:  # If completion messages failed
-                print("ERROR - Failed to create completion messages")
-                return [self.create_text_message(GENERAL['error'])]
-            return completion_messages
+            return self._create_completion_messages()
             
-        # If not an image/video, remind about photos and show navigation options
+        # If not an image/video or skip option, remind about photos and show options
         return [
             self.create_text_message(self.responses['photo_requirement']['message']),
             create_interactive_message(
@@ -161,11 +162,23 @@ class MovingService(BaseConversationService):
                 header_text=self.responses['photos']['header'],
                 footer_text=self.responses['photos']['footer'],
                 buttons=[
-                    {"id": "main_menu", "title": NAVIGATION['back_to_main']},
-                    {"id": "support", "title": NAVIGATION['talk_to_representative']}
+                    {"id": str(i), "title": btn} for i, btn in enumerate(self.responses['photo_requirement']['options']['buttons'])
                 ]
             )
         ]
+
+    def _handle_slot_selection(self, message: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Handle slot selection state."""
+        selected_slot = get_button_title(message)
+        
+        # Handle navigation options
+        if selected_slot in [NAVIGATION['back_to_main'], NAVIGATION['talk_to_representative']]:
+            return [self.create_text_message(GENERAL['error'])]
+            
+        # Set state to completed and send confirmation
+        self.set_conversation_state("completed")
+        confirmation_msg = f"מעולה! נציג שלנו יתקשר אליך ב{selected_slot} כדי לתת הצעת מחיר מדויקת."
+        return [self.create_text_message(confirmation_msg)]
 
     def handle_response(self, message: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Handle user response based on current conversation state."""
@@ -174,6 +187,7 @@ class MovingService(BaseConversationService):
             "awaiting_customer_details": self._handle_customer_details,
             "awaiting_verification": self._handle_verification,
             "awaiting_photos": self._handle_photos,
+            "awaiting_slot_selection": self._handle_slot_selection,
             "completed": lambda _: []  # Return empty list when completed to avoid further messages
         }
         
@@ -230,6 +244,9 @@ class MovingService(BaseConversationService):
             if not schedule_msg:
                 raise ValueError("Failed to create interactive message")
             messages.append(schedule_msg)
+            
+            # Set state to await slot selection
+            self.set_conversation_state("awaiting_slot_selection")
             
             print("DEBUG - Successfully created completion messages")
             return messages
