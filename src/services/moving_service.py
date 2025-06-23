@@ -97,6 +97,7 @@ class MovingService(BaseConversationService):
         """Handle customer details state."""
         text = message.get('text', {}).get('body', '')
         if text:
+            # Save the details and create verification message
             self.customer_details = text
             responses = SERVICE_RESPONSES['moving']
             verify_options = create_interactive_message(
@@ -106,9 +107,12 @@ class MovingService(BaseConversationService):
                 footer_text="אנא אשר/י שהפרטים נכונים",
                 buttons=[{"id": str(i), "title": btn} for i, btn in enumerate(responses['verify_details']['options']['buttons'])]
             )
+            # Set state to awaiting verification
             self.set_conversation_state("awaiting_verification")
             return [verify_options]
-        return [self.create_text_message(GENERAL['error'])]
+        
+        # If no text provided, send the quote message again
+        return [self._create_quote_message()]
 
     def _handle_verification(self, message: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Handle verification state."""
@@ -118,8 +122,11 @@ class MovingService(BaseConversationService):
             self.set_conversation_state("awaiting_photos")
             return self._create_photo_requirement_message()
         elif button_title == 'לא, צריך לתקן ❌':
-            self.set_conversation_state("awaiting_customer_details")
+            # Reset details but keep the service type
             self.customer_details = None
+            # Set state back to awaiting details
+            self.set_conversation_state("awaiting_customer_details")
+            # Send the quote message again
             return [self._create_quote_message()]
         return [self.create_text_message(GENERAL['error'])]
 
@@ -173,10 +180,9 @@ class MovingService(BaseConversationService):
         if handler:
             return handler(message)
         return [self.create_text_message(GENERAL['error'])]
-        
-    def _create_completion_messages(self) -> List[Dict[str, Any]]:
+
+    def _create_completion_messages(self, responses) -> List[Dict[str, Any]]:
         """Helper method to create completion messages."""
-        completion_responses = SERVICE_RESPONSES['moving']['completed']
         messages = []
         
         # Update labels silently
@@ -184,14 +190,7 @@ class MovingService(BaseConversationService):
         WhatsAppClient.apply_label(self.recipient, LABELS['waiting_quote'])
         
         # Create final message explaining the phone call requirement
-        final_msg = self.create_text_message(
-            "כדי להשלים את תהליך קבלת הצעת המחיר, נצטרך לקיים שיחת טלפון קצרה עם אחד מנציגי התמיכה שלנו."
-            "\n\nנציגינו זמינים בימים ראשון עד חמישי בשעות הבאות:"
-            "\nימים ראשון, שלישי ורביעי: 10:00-12:00"
-            "\nימים שני וחמישי: 17:00-19:00"
-            "\n\nאנא בחר/י מועד מתאים מהאפשרויות הבאות:"
-        )
-        messages.append(final_msg)
+        completion_responses = responses['completion']['after_media']
 
         # Get dynamic slots
         available_slots = get_available_slots()
@@ -205,9 +204,9 @@ class MovingService(BaseConversationService):
         # Create scheduling message
         schedule_msg = create_interactive_message(
             recipient=self.recipient,
-            body_text="בחר/י את המועד המתאים לך:",
+            body_text=completion_responses,
             header_text="תיאום שיחת טלפון 📞",
-            footer_text="נשמח לשוחח איתך ולענות על כל השאלות!",
+            footer_text="",
             buttons=available_slots
         )
         messages.append(schedule_msg)
