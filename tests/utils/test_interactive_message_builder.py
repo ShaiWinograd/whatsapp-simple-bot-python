@@ -15,10 +15,11 @@ def test_create_interactive_message_default():
     
     # Check body contains default welcome message
     expected_body = f"{GENERAL['intro']}\n\n{GENERAL['welcome_message']}"
-    assert result["body"]["text"] == expected_body
+    assert result["body"] == expected_body
     
-    # Check header is default
-    assert result["header"]["text"] == GENERAL['header']
+    # Check header and type
+    assert result["header"] == GENERAL['header']
+    assert result["type"] == "button"
     
     # Check buttons
     buttons = result["action"]["buttons"]
@@ -53,9 +54,10 @@ def test_create_interactive_message_custom():
     assert result["to"] == recipient
     
     # Check message components
-    assert result["body"]["text"] == body_text
-    assert result["header"]["text"] == header_text
-    assert result["footer"]["text"] == footer_text
+    assert result["body"] == body_text
+    assert result["header"] == header_text
+    assert result["footer"] == footer_text
+    assert result["type"] == "button"
     
     # Check buttons
     result_buttons = result["action"]["buttons"]
@@ -81,7 +83,8 @@ def test_create_interactive_message_minimal():
     assert result["messaging_product"] == "whatsapp"
     assert result["recipient_type"] == "individual"
     assert result["to"] == recipient
-    assert result["body"]["text"] == body_text
+    assert result["body"] == body_text
+    assert result["type"] == "button"
     assert result["action"]["buttons"] == [{"type": "quick_reply", "id": "1", "title": "Button 1"}]
     
     # Check optional fields are not present

@@ -44,31 +44,16 @@ def create_interactive_message(
     print("Using footer:", footer)
     print("Using buttons:", button_list)
 
-    # Create and return payload
-    # Create base payload
-    payload = {
-        "messaging_product": "whatsapp",
-        "recipient_type": "individual",
-        "to": recipient,
-        "body": {
-            "text": body
-        },
-        "action": {
-            "buttons": [
-                {
-                    "type": "quick_reply",
-                    "title": btn["title"],
-                    "id": btn["id"]
-                }
-                for btn in button_list
-            ]
-        }
-    }
+    # Create payload using InteractiveMessagePayload
+    interactive_payload = InteractiveMessagePayload(
+        to=recipient,
+        body_text=body,
+        header_text=header,
+        footer_text=footer,
+        buttons=button_list,
+        type="button"  # Default type for interactive messages
+    )
     
-    # Add optional fields if provided
-    if header:
-        payload["header"] = {"text": header}
-    if footer:
-        payload["footer"] = {"text": footer}
+    payload = interactive_payload.to_dict()
     print("Final payload:", payload)
     return payload

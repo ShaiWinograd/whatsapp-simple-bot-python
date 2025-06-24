@@ -102,7 +102,7 @@ def test_handle_emergency_support(moving_service, mock_conversation_manager):
     })
     
     assert len(messages) == 1
-    assert messages[0]['body']['text'] == moving_service.responses['urgent_support_message']
+    assert messages[0]['body'] == moving_service.responses['urgent_support_message']
     mock_conversation_manager.update_service_state.assert_called_with(
         "1234567890", "awaiting_emergency_support"
     )

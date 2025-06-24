@@ -22,9 +22,7 @@ class TextMessagePayload(BaseWebhookPayload):
     def to_dict(self) -> Dict[str, Any]:
         payload = super().to_dict()
         payload.update({
-            "body": {
-                "text": self.body
-            }
+            "body": self.body
         })
         return payload
 
@@ -53,21 +51,25 @@ class InteractiveMessagePayload(BaseWebhookPayload):
     header_text: Optional[str] = None
     footer_text: Optional[str] = None
     buttons: List[Dict[str, str]] = field(default_factory=list)  # List of {id, title} dicts
+    type: str = field(default="button")
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to WhatsApp API format."""
         payload = super().to_dict()
 
-        # Required body
-        payload["body"] = {"text": self.body_text}
+        # Add body as string
+        payload["body"] = self.body_text
 
         # Optional header
         if self.header_text:
-            payload["header"] = {"text": self.header_text}
+            payload["header"] = self.header_text
 
         # Optional footer
         if self.footer_text:
-            payload["footer"] = {"text": self.footer_text}
+            payload["footer"] = self.footer_text
+
+        # Add type field
+        payload["type"] = self.type
 
         # Required buttons under action
         payload["action"] = {

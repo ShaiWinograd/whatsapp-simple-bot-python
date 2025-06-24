@@ -20,7 +20,7 @@ def test_text_message_payload():
     payload = TextMessagePayload(to="1234567890", body="Test message")
     result = payload.to_dict()
     
-    assert result["body"]["text"] == "Test message"
+    assert result["body"] == "Test message"
 
 def test_interactive_message_payload():
     """Test interactive message payload creation with all fields."""
@@ -45,9 +45,10 @@ def test_interactive_message_payload():
     assert result["to"] == "1234567890"
     
     # Check message components
-    assert result["body"]["text"] == "Test body"
-    assert result["header"]["text"] == "Test header"
-    assert result["footer"]["text"] == "Test footer"
+    assert result["body"] == "Test body"
+    assert result["header"] == "Test header"
+    assert result["footer"] == "Test footer"
+    assert result["type"] == "button"
     
     # Check buttons
     assert "action" in result
@@ -69,7 +70,7 @@ def test_interactive_message_payload_minimal():
     result = payload.to_dict()
     
     # Check required fields
-    assert result["body"]["text"] == "Test body"
+    assert result["body"] == "Test body"
     assert result["action"]["buttons"] == [{"type": "quick_reply", "id": "1", "title": "Button 1"}]
     
     # Check optional fields are not present

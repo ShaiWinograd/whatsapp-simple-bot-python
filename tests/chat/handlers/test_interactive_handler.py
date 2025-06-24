@@ -51,7 +51,7 @@ def test_handle_button_click_main_menu(handler, service_factory):
     
     # Mock service creation
     mock_service = Mock()
-    mock_service.handle_initial_message.return_value = [{"body": {"text": "Service response"}}]
+    mock_service.handle_initial_message.return_value = [{"body": "Service response", "type": "button"}]
     service_factory.create.return_value = mock_service
     
     result = handler.handle(message, base_payload)
@@ -71,7 +71,8 @@ def test_handle_button_click_main_menu(handler, service_factory):
     
     # Verify service response was returned
     assert len(result) == 1
-    assert result[0]["body"]["text"] == "Service response"
+    assert result[0]["body"] == "Service response"
+    assert result[0]["type"] == "button"
 
 def test_handle_back_to_main_menu(handler):
     """Test handling 'back to main menu' button click."""
@@ -112,7 +113,7 @@ def test_handle_human_support_request(handler, service_factory):
     
     # Mock human support service
     mock_service = Mock()
-    mock_service.handle_initial_message.return_value = [{"body": {"text": "Human support response"}}]
+    mock_service.handle_initial_message.return_value = [{"body": "Human support response", "type": "button"}]
     service_factory.create.return_value = mock_service
     
     result = handler.handle(message, base_payload)
@@ -132,7 +133,8 @@ def test_handle_human_support_request(handler, service_factory):
     
     # Verify service response was returned
     assert len(result) == 1
-    assert result[0]["body"]["text"] == "Human support response"
+    assert result[0]["body"] == "Human support response"
+    assert result[0]["type"] == "button"
 
 def test_handle_service_creation_error(handler, service_factory):
     """Test handling error during service creation."""
