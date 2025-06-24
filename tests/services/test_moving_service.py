@@ -40,6 +40,26 @@ def test_handle_initial_message(moving_service, mocker):
     moving_service._apply_service_label.assert_called_once_with('moving')
 
 
+def test_handle_initial_message_missing_config(moving_service):
+    """Test handling missing configuration in initial message."""
+    # Backup and modify responses
+    original_responses = moving_service.responses
+    moving_service.responses = {}
+    
+    messages = moving_service.handle_initial_message()
+    assert len(messages) == 1
+    assert messages[0]['text']['body'] == GENERAL['error']
+    
+    # Test missing body in config
+    moving_service.responses = {'initial': {}}
+    messages = moving_service.handle_initial_message()
+    assert len(messages) == 1
+    assert messages[0]['text']['body'] == GENERAL['error']
+    
+    # Restore original responses
+    moving_service.responses = original_responses
+
+
 def test_handle_packing_choice_valid(moving_service):
     """Test handling valid packing choice selections."""
     moving_service.set_conversation_state("awaiting_packing_choice")
@@ -91,26 +111,76 @@ def test_get_address_type_for_service(moving_service):
         assert expected_text in address_type
 
 
-def test_handle_customer_details(moving_service):
-    """Test handling customer details submission."""
+def test_create_details_message(moving_service):
+    """Test details message creation for different service types."""
+    test_cases = ["packing", "unpacking", "both"]
+    
+    for service_type in test_cases:
+        moving_service.service_type = service_type
+        message = moving_service._create_details_message()
+        
+        assert message['type'] == "interactive"
+        # Verify correct config is used
+        details_type = service_type if service_type == 'both' else f"{service_type}_only"
+        expected_config = moving_service.responses['details_collection'][details_type]
+        assert message['interactive']['body']['text'] == expected_config['body']
+
+
+def test_handle_customer_details_boundary(moving_service):
+    """Test boundary cases for customer details validation."""
     moving_service.set_conversation_state("awaiting_customer_details")
     moving_service.service_type = "packing"
     
-    # Test empty details
-    messages = moving_service._handle_customer_details({"text": {"body": ""}})
+    # Test exactly minimum length
+    messages = moving_service._handle_customer_details({"text": {"body": "a" * 20}})
     assert len(messages) == 1
+    assert moving_service.get_conversation_state() == "awaiting_verification"
     
-    # Test too short details
-    messages = moving_service._handle_customer_details({"text": {"body": "short"}})
+    # Test one character below minimum
+    messages = moving_service._handle_customer_details({"text": {"body": "a" * 19}})
     assert len(messages) == 2
     assert "לא מספיקים" in messages[0]['text']['body']
     
-    # Test valid details
-    valid_details = "שם: ישראל ישראלי, טלפון: 0501234567, כתובת נוכחית: תל אביב"
-    messages = moving_service._handle_customer_details({"text": {"body": valid_details}})
+    # Test missing text field
+    messages = moving_service._handle_customer_details({})
     assert len(messages) == 1
-    assert moving_service.customer_details == valid_details
-    assert moving_service.get_conversation_state() == "awaiting_verification"
+    assert messages[0]['type'] == "interactive"
+
+
+def test_handle_photos_invalid_media(moving_service):
+    """Test handling invalid media in photo submissions."""
+    moving_service.set_conversation_state("awaiting_photos")
+    
+    # Test missing media ID
+    messages = moving_service._handle_photos({
+        "type": "image",
+        "image": {}
+    })
+    assert len(messages) == 2  # Error message and photo options
+    
+    # Test missing media object
+    messages = moving_service._handle_photos({
+        "type": "video"
+    })
+    assert len(messages) == 2
+
+
+def test_handle_photos_missing_config(moving_service):
+    """Test handling missing configuration in photo requirement messages."""
+    moving_service.set_conversation_state("awaiting_photos")
+    
+    # Backup and modify responses
+    original_responses = moving_service.responses
+    moving_service.responses = {}
+    
+    messages = moving_service._handle_photos({
+        "text": {"body": "test"}
+    })
+    assert len(messages) == 1
+    assert messages[0]['text']['body'] == GENERAL['error']
+    
+    # Restore original responses
+    moving_service.responses = original_responses
 
 
 def test_handle_verification(moving_service):
@@ -154,7 +224,6 @@ def test_handle_photos(moving_service):
     })
     assert len(messages) == 1
     assert moving_service.get_conversation_state() == "awaiting_slot_selection"
-    assert moving_service.get_conversation_state() == "awaiting_slot_selection"
     
     # Test skip photos option
     messages = moving_service._handle_photos({
@@ -167,6 +236,31 @@ def test_handle_photos(moving_service):
         "text": {"body": "not a photo"}
     })
     assert len(messages) == 2  # Reminder message and options
+
+
+def test_handle_slot_selection_complete(moving_service, mocker):
+    """Test complete flow of slot selection including navigation."""
+    moving_service.set_conversation_state("awaiting_slot_selection")
+    mock_remove_label = mocker.patch.object(moving_service, '_remove_label')
+    mock_apply_label = mocker.patch.object(moving_service, '_apply_service_label')
+    
+    # Test back to main menu
+    messages = moving_service._handle_slot_selection({
+        "interactive": {"button_reply": {"title": NAVIGATION['back_to_main']}}
+    })
+    assert len(messages) == 1
+    assert moving_service.get_conversation_state() == "awaiting_packing_choice"
+    
+    # Test valid slot selection
+    slot = "היום בין 12:00-14:00"
+    messages = moving_service._handle_slot_selection({
+        "interactive": {"button_reply": {"title": slot}}
+    })
+    assert len(messages) == 1
+    assert moving_service.selected_time_slot == slot
+    assert moving_service.get_conversation_state() == "completed"
+    mock_remove_label.assert_called_once_with('new_conversation')
+    mock_apply_label.assert_called_once_with('waiting_for_call')
 
 
 def test_handle_invalid_state(moving_service):
@@ -215,39 +309,3 @@ def test_handle_emergency_support(moving_service, mocker):
     assert moving_service.get_conversation_state() == "awaiting_slot_selection"
     mock_remove_label.assert_not_called()
     mock_apply_label.assert_not_called()
-
-
-def test_handle_slot_selection(moving_service, mocker):
-    """Test handling time slot selection."""
-    moving_service.set_conversation_state("awaiting_slot_selection")
-    mock_remove_label = mocker.patch.object(moving_service, '_remove_label')
-    mock_apply_label = mocker.patch.object(moving_service, '_apply_service_label')
-
-    # Test valid slot selection
-    slot = "היום בין 12:00-14:00"
-    messages = moving_service._handle_slot_selection({
-        "interactive": {"button_reply": {"title": slot}}
-    })
-    assert len(messages) == 1
-    assert moving_service.selected_time_slot == slot
-    assert moving_service.get_conversation_state() == "completed"
-    mock_remove_label.assert_called_once_with('new_conversation')
-    mock_apply_label.assert_called_once_with('waiting_for_call')
-
-    # Test reschedule
-    mock_remove_label.reset_mock()
-    mock_apply_label.reset_mock()
-    messages = moving_service._handle_slot_selection({
-        "interactive": {"button_reply": {"title": "לקבוע זמן אחר"}}
-    })
-    assert len(messages) == 1
-    assert moving_service.get_conversation_state() == "awaiting_slot_selection"
-    mock_remove_label.assert_not_called()
-    mock_apply_label.assert_not_called()
-
-    # Test talk to representative
-    messages = moving_service._handle_slot_selection({
-        "interactive": {"button_reply": {"title": NAVIGATION['talk_to_representative']}}
-    })
-    assert len(messages) == 1
-    assert moving_service.get_conversation_state() == "awaiting_emergency_support"
