@@ -6,6 +6,13 @@ A modular WhatsApp bot built with Python, using the WhatsApp Cloud API. The bot 
 
 ```
 whatsapp-simple-bot-python/
+├── tests/                  # Test suite
+│   ├── __init__.py
+│   ├── conftest.py        # Common test fixtures
+│   └── services/          # Service tests
+│       ├── test_base_service.py
+│       ├── test_moving_service.py
+│       └── test_organization_service.py
 ├── src/                    # Source code
 │   ├── chat/              # Chat handling
 │   │   ├── __init__.py
@@ -62,6 +69,42 @@ python app.py
 ```
 
 The bot will start running on `http://localhost:8080`.
+
+## Testing
+
+### Running Tests
+
+Execute the test suite with coverage reporting:
+```bash
+pytest
+```
+
+This will:
+- Run all unit tests
+- Generate a coverage report in the terminal
+- Create an HTML coverage report in `htmlcov/`
+
+### Test Coverage
+
+The test suite covers:
+- Service initialization and configuration
+- Conversation state management
+- Message handling and validation
+- Interactive message creation
+- WhatsApp client integration
+- Error handling
+- Service-specific flows
+
+### Writing Tests
+
+New tests should:
+1. Use fixtures from `conftest.py` for common setup
+2. Mock external dependencies (WhatsApp client, etc.)
+3. Test both success and error paths
+4. Verify state transitions
+5. Follow existing test patterns
+
+See `tests/README.md` for detailed testing documentation.
 
 ## Features
 

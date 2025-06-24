@@ -18,6 +18,7 @@ class MovingService(BaseConversationService):
         """
         super().__init__(recipient)
         self.service_type: str | None = None
+        self.selected_time_slot: str | None = None
         self.responses = SERVICE_RESPONSES['moving']
 
     def get_service_name(self) -> str:
@@ -46,6 +47,26 @@ class MovingService(BaseConversationService):
         except Exception as e:
             print(f"Error creating initial moving service message: {str(e)}")
             return [self.create_text_message(GENERAL['error'])]
+
+    def _create_emergency_support_message(self) -> Dict[str, Any]:
+        """Create emergency support inquiry message."""
+        config = self.responses['emergency_support']
+        return self._create_interactive_message_from_config(config)
+
+    def _create_time_slot_message(self) -> Dict[str, Any]:
+        """Create time slot selection message."""
+        config = self.responses['time_slots']
+        return self._create_interactive_message_from_config(config)
+
+    def _create_selected_slot_message(self) -> Dict[str, Any]:
+        """Create message showing selected time slot with reschedule option."""
+        config = self.responses['selected_slot']
+        return self._create_interactive_message_from_config({
+            'body': config['body'].format(slot=self.selected_time_slot),
+            'header': config['header'],
+            'footer': config['footer'],
+            'buttons': config['buttons']
+        })
 
     def _create_photo_requirement_message(self) -> List[Dict[str, Any]]:
         """Create photo requirement messages with options."""
@@ -158,6 +179,44 @@ class MovingService(BaseConversationService):
             return [self._create_rewrite_details_message()]
         return [self.create_text_message(GENERAL['error'])]
 
+    def _handle_emergency_support(self, message: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Handle emergency support inquiry."""
+        button_title = get_button_title(message)
+        
+        if button_title == 'כן':
+            # Remove new conversation label and apply urgent support label
+            self._remove_label('new_conversation')
+            self._apply_service_label('waiting_urgent_support')
+            return [self.create_text_message(self.responses['urgent_support_message'])]
+        elif button_title == 'לא':
+            self.set_conversation_state("awaiting_slot_selection")
+            return [self._create_time_slot_message()]
+        return [self.create_text_message(GENERAL['error'])]
+
+    def _handle_slot_selection(self, message: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Handle time slot selection."""
+        button_title = get_button_title(message)
+        
+        if button_title == NAVIGATION['back_to_main']:
+            return self.handle_initial_message()
+        elif button_title == NAVIGATION['talk_to_representative']:
+            self.set_conversation_state("awaiting_emergency_support")
+            return [self._create_emergency_support_message()]
+        
+        # Handle time slot selection
+        available_slots = self.responses['time_slots']['buttons']
+        if any(button_title == slot['title'] for slot in available_slots):
+            self.selected_time_slot = button_title
+            # Remove new conversation label and apply waiting for call label
+            self._remove_label('new_conversation')
+            self._apply_service_label('waiting_for_call')
+            self.set_conversation_state("completed")
+            return [self._create_selected_slot_message()]
+        elif button_title == 'לקבוע זמן אחר':
+            return [self._create_time_slot_message()]
+            
+        return [self.create_text_message(GENERAL['error'])]
+
     def _handle_photos(self, message: Dict[str, Any]) -> List[Dict[str, Any]]:
         """
         Handle the photo collection state of the conversation.
@@ -193,7 +252,8 @@ class MovingService(BaseConversationService):
                 media_id = message.get(message_type, {}).get('id')
                 if not media_id:
                     raise ValueError(f"Invalid {message_type} message: missing media ID")
-                return self._create_completion_messages()
+                self.set_conversation_state("awaiting_slot_selection")
+                return [self._create_time_slot_message()]
                 
             # If not a valid submission, get photo requirement config
             photo_config = self.responses.get('photo_requirement', {})
@@ -237,6 +297,7 @@ class MovingService(BaseConversationService):
             "awaiting_customer_details": self._handle_customer_details,
             "awaiting_verification": self._handle_verification,
             "awaiting_photos": self._handle_photos,
+            "awaiting_emergency_support": self._handle_emergency_support,
             "awaiting_slot_selection": self._handle_slot_selection,
             "completed": lambda _: []  # Return empty list when completed
         }

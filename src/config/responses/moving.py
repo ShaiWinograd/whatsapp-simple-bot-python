@@ -14,7 +14,7 @@ INITIAL = {
     ]
 }
 
-DETAILS_TEMPLATE = """כדי שנוכל לנוודא שאנחנו זמינים בתאריך המעבר ושהכתובת שלכם נמצאת בטווח השירות שלנו.
+DETAILS_TEMPLATE = """כדי שנוכל לנוודא שאנחנו זמינים בתאריך המעבר ושאתם גרים שלכם נמצאת בטווח השירות שלנו.
 אנא אנא שלחו בהודעה חוזרת את כל הפרטים הבאים:
 
 שם מלא
@@ -92,6 +92,44 @@ PHOTO_REQUIREMENT = {
     }
 }
 
+EMERGENCY_SUPPORT = {
+    'header': 'תמיכה דחופה',
+    'body': 'האם הפנייה דחופה ודורשת שיחה מנציג כמה שיותר מהר?',
+    'footer': '',
+    'buttons': [
+        'כן',
+        'לא'
+    ]
+}
+
+TIME_SLOTS = {
+    'header': 'תיאום שיחה',
+    'body': 'נא לבחור שעה נוחה לשיחה:',
+    'footer': '',
+    'buttons': [
+        'היום בין 12:00-14:00',
+        'היום בין 14:00-16:00',
+        'היום בין 16:00-18:00',
+        'מחר בין 10:00-12:00',
+        'מחר בין 12:00-14:00',
+        NAVIGATION['back_to_main'],
+        NAVIGATION['talk_to_representative']
+    ]
+}
+
+SELECTED_SLOT = {
+    'header': 'אישור תיאום',
+    'body': 'נציג יצור איתך קשר {slot}\nרוצה לשנות את השעה?',
+    'footer': '',
+    'buttons': [
+        'לקבוע זמן אחר',
+        NAVIGATION['back_to_main'],
+        NAVIGATION['talk_to_representative']
+    ]
+}
+
+URGENT_SUPPORT_MESSAGE = 'פנייתך התקבלה, נציג שלנו יחזור אליך בדקות הקרובות.'
+
 COMPLETION = {
     'after_media': """כדי להשלים את התהליך, נשמח לקיים שיחה קצרה לתיאום ציפיות.
     כדי שנדע מתי להתקשר אליכם, אנא בחרו מועד נוח מהאפשרויות הבאות:""",
@@ -144,5 +182,9 @@ RESPONSES = {
     'scheduling': SCHEDULING,
     'fallback': FALLBACK,
     'rewrite_details': REWRITE_DETAILS,
+    'emergency_support': EMERGENCY_SUPPORT,
+    'time_slots': TIME_SLOTS,
+    'selected_slot': SELECTED_SLOT,
+    'urgent_support_message': URGENT_SUPPORT_MESSAGE,
     'service_name': SERVICE['name']
 }
