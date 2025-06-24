@@ -1,9 +1,15 @@
 """Tests for the MovingService class."""
 import pytest
 from src.services.moving_service import MovingService
-from src.config.responses import SERVICE_RESPONSES
+from src.config.responses.moving import (
+    URGENT_SUPPORT_MESSAGE,
+    TIME_SLOTS,
+    SELECTED_SLOT,
+    INITIAL
+)
 from src.config.responses.common import NAVIGATION, GENERAL
 from src.chat.conversation_manager import ConversationManager
+
 
 
 @pytest.fixture
@@ -32,12 +38,13 @@ def test_initialization(moving_service):
     assert moving_service.service_type is None
     assert moving_service.selected_time_slot is None
     assert moving_service.customer_details is None
-    assert moving_service.responses == SERVICE_RESPONSES['moving']
+    # Don't test responses directly since we're using imported constants
 
 
 def test_get_service_name(moving_service):
     """Test get_service_name returns correct value."""
-    assert moving_service.get_service_name() == SERVICE_RESPONSES['moving']['service_name']
+    from src.config.responses.moving import SERVICE
+    assert moving_service.get_service_name() == SERVICE['name']
 
 
 def test_handle_initial_message_with_manager(moving_service, mock_conversation_manager):
@@ -48,8 +55,7 @@ def test_handle_initial_message_with_manager(moving_service, mock_conversation_m
         "1234567890", "awaiting_packing_choice"
     )
     assert len(messages) == 1
-    assert "action" in messages[0]
-    assert "buttons" in messages[0]["action"]
+    assert messages[0] == moving_service._create_interactive_message_from_config(INITIAL)
 
 
 def test_handle_initial_message_without_manager(moving_service_no_manager):
@@ -58,8 +64,7 @@ def test_handle_initial_message_without_manager(moving_service_no_manager):
     
     assert moving_service_no_manager.get_conversation_state() == "awaiting_packing_choice"
     assert len(messages) == 1
-    assert "action" in messages[0]
-    assert "buttons" in messages[0]["action"]
+    assert messages[0] == moving_service_no_manager._create_interactive_message_from_config(INITIAL)
 
 
 def test_handle_packing_choice_valid(moving_service, mock_conversation_manager):
@@ -103,7 +108,7 @@ def test_handle_emergency_support(moving_service, mock_conversation_manager):
     
     assert len(messages) == 1
     assert messages[0]['type'] == 'text'
-    assert messages[0]['body'] == moving_service.responses['urgent_support_message']
+    assert messages[0]['body'] == URGENT_SUPPORT_MESSAGE
     mock_conversation_manager.update_service_state.assert_called_with(
         "1234567890", "awaiting_emergency_support"
     )
@@ -114,6 +119,7 @@ def test_handle_emergency_support(moving_service, mock_conversation_manager):
     })
     
     assert len(messages) == 1
+    assert messages[0] == moving_service._create_interactive_message_from_config(TIME_SLOTS)
     mock_conversation_manager.update_service_state.assert_called_with(
         "1234567890", "awaiting_slot_selection"
     )
@@ -128,6 +134,7 @@ def test_handle_photos_media(moving_service, mock_conversation_manager):
     })
     
     assert len(messages) == 1
+    assert messages[0] == moving_service._create_interactive_message_from_config(TIME_SLOTS)
     mock_conversation_manager.update_service_state.assert_called_with(
         "1234567890", "awaiting_slot_selection"
     )
@@ -143,6 +150,9 @@ def test_handle_slot_selection_complete(moving_service, mock_conversation_manage
     
     assert len(messages) == 1
     assert moving_service.selected_time_slot == slot
+    expected_config = SELECTED_SLOT.copy()
+    expected_config['body'] = expected_config['body'].format(slot=slot)
+    assert messages[0] == moving_service._create_interactive_message_from_config(expected_config)
     mock_conversation_manager.update_service_state.assert_called_with(
         "1234567890", "completed"
     )
@@ -195,8 +205,13 @@ def test_reset_state_management(moving_service, mock_conversation_manager):
     
     # Verify welcome message is returned
     assert len(messages) == 1
-    assert "action" in messages[0]
-    assert "buttons" in messages[0]["action"]
+    expected_config = {
+        'body': f"{GENERAL['intro']}\n\n{GENERAL['welcome_message']}",
+        'header': GENERAL['header'],
+        'footer': GENERAL['footer'],
+        'buttons': GENERAL['options']
+    }
+    assert messages[0] == moving_service._create_interactive_message_from_config(expected_config)
 
 
 def test_customer_details_handling(moving_service, mock_conversation_manager):

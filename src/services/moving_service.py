@@ -1,15 +1,28 @@
 """Service for handling moving home conversation flow."""
 from typing import List, Dict, Any
 from .base_service import BaseConversationService
-from ..config.responses import SERVICE_RESPONSES
+from ..config.responses.moving import (
+    RESPONSES as MOVING_RESPONSES,
+    SERVICE,
+    URGENT_SUPPORT_MESSAGE,
+    TIME_SLOTS,
+    SELECTED_SLOT,
+    EMERGENCY_SUPPORT,
+    INITIAL,
+    DETAILS_COLLECTION,
+    VERIFY_DETAILS,
+    VERIFY,
+    PHOTOS
+)
 from ..config.responses.common import NAVIGATION, GENERAL
 from ..utils.interactive_message_utils import get_button_title
 from ..models.webhook_payload import TextMessagePayload
 
 
+
 class MovingService(BaseConversationService):
     """Service for handling moving home related conversations with state management."""
-
+    
     def __init__(self, recipient: str, conversation_manager=None):
         """
         Initialize the MovingService.
@@ -18,39 +31,25 @@ class MovingService(BaseConversationService):
             recipient (str): The recipient's phone number
             conversation_manager: Optional conversation manager instance
         """
-        super().__init__(recipient, conversation_manager)
         self.service_type: str | None = None
         self.selected_time_slot: str | None = None
-        self.responses = SERVICE_RESPONSES['moving']
+        self.responses = MOVING_RESPONSES
+        super().__init__(recipient, conversation_manager)
 
     def get_service_name(self) -> str:
-        return self.responses['service_name']
+        """Return the name of the service."""
+        return SERVICE['name']
+
 
     def handle_initial_message(self) -> List[Dict[str, Any]]:
         """Handle initial moving service conversation."""
-        try:
-            if self.conversation_manager:
-                self.conversation_manager.update_service_state(self.recipient, "awaiting_packing_choice")
-            else:
-                self.set_conversation_state("awaiting_packing_choice")
-                
-            print("\nCreating initial moving service message...")
+        if self.conversation_manager:
+            self.conversation_manager.update_service_state(self.recipient, "awaiting_packing_choice")
+        else:
+            self.set_conversation_state("awaiting_packing_choice")
             
-            if 'initial' not in self.responses:
-                raise KeyError("Missing 'initial' configuration in responses")
-                
-            config = self.responses['initial']
-            if not config.get('body'):
-                raise KeyError("Missing 'body' field in initial configuration")
-                
-            payload = self._create_interactive_message_from_config(config)
-            print(f"Created initial moving service payload: {payload}")
-            return [payload]
-            
-        except Exception as e:
-            print(f"Error creating initial moving service message: {str(e)}")
-            # Use base class method to create error message
-            return [self.create_text_message(GENERAL['error'])]
+        print("\nCreating initial moving service message...")
+        return [self._create_interactive_message_from_config(INITIAL)]
 
     def _reset_to_main_menu(self) -> List[Dict[str, Any]]:
         """Reset service state and return to main menu."""
@@ -113,7 +112,7 @@ class MovingService(BaseConversationService):
             return self.create_text_message(GENERAL['error'])
             
         try:
-            config = self.responses['details_collection'][service_type_map[self.service_type]]
+            config = DETAILS_COLLECTION[service_type_map[self.service_type]]
             return self._create_interactive_message_from_config(config)
         except KeyError:
             print("Missing required config keys for details message")
@@ -121,8 +120,7 @@ class MovingService(BaseConversationService):
 
     def _create_emergency_support_message(self) -> Dict[str, Any]:
         """Create emergency support confirmation message."""
-        config = self.responses['emergency_support']
-        return self._create_interactive_message_from_config(config)
+        return self._create_interactive_message_from_config(EMERGENCY_SUPPORT)
 
     def _handle_emergency_support(self, message: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Handle response to emergency support question."""
@@ -132,14 +130,13 @@ class MovingService(BaseConversationService):
                 self.conversation_manager.update_service_state(self.recipient, "awaiting_emergency_support")
             else:
                 self.set_conversation_state("awaiting_emergency_support")
-            return [self.create_text_message(self.responses['urgent_support_message'])]
+            return [self.create_text_message(URGENT_SUPPORT_MESSAGE)]
         elif selected_option == 'לא':
             if self.conversation_manager:
                 self.conversation_manager.update_service_state(self.recipient, "awaiting_slot_selection")
             else:
                 self.set_conversation_state("awaiting_slot_selection")
-            config = self.responses['time_slots']
-            return [self._create_interactive_message_from_config(config)]
+            return [self._create_interactive_message_from_config(TIME_SLOTS)]
         return [self.create_text_message(GENERAL['error'])]
 
     def _handle_slot_selection(self, message: Dict[str, Any]) -> List[Dict[str, Any]]:
@@ -155,15 +152,15 @@ class MovingService(BaseConversationService):
                 self.set_conversation_state("awaiting_emergency_support")
             return [self._create_emergency_support_message()]
         elif selected_option == 'לקבוע זמן אחר':
-            return [self._create_interactive_message_from_config(self.responses['time_slots'])]
+            return [self._create_interactive_message_from_config(TIME_SLOTS)]
             
-        if selected_option in self.responses['time_slots']['buttons']:
+        if selected_option in TIME_SLOTS['buttons']:
             self.selected_time_slot = selected_option
             if self.conversation_manager:
                 self.conversation_manager.update_service_state(self.recipient, "completed")
             else:
                 self.set_conversation_state("completed")
-            config = self.responses['selected_slot'].copy()
+            config = SELECTED_SLOT.copy()
             config['body'] = config['body'].format(slot=self.selected_time_slot)
             return [self._create_interactive_message_from_config(config)]
             
@@ -176,14 +173,14 @@ class MovingService(BaseConversationService):
                 self.conversation_manager.update_service_state(self.recipient, "awaiting_slot_selection")
             else:
                 self.set_conversation_state("awaiting_slot_selection")
-            return [self._create_interactive_message_from_config(self.responses['time_slots'])]
+            return [self._create_interactive_message_from_config(TIME_SLOTS)]
         selected_option = get_button_title(message)
         if selected_option == 'מעדיפים לדלג':
             if self.conversation_manager:
                 self.conversation_manager.update_service_state(self.recipient, "awaiting_slot_selection")
             else:
                 self.set_conversation_state("awaiting_slot_selection")
-            return [self._create_interactive_message_from_config(self.responses['time_slots'])]
+            return [self._create_interactive_message_from_config(TIME_SLOTS)]
         return [self.create_text_message(GENERAL['error'])]
 
     def _handle_customer_details(self, message: Dict[str, Any]) -> List[Dict[str, Any]]:
@@ -202,7 +199,13 @@ class MovingService(BaseConversationService):
         else:
             self.set_conversation_state("awaiting_verification")
             
-        return [self._create_verification_message()]
+        verify_config = {
+            'body': VERIFY_DETAILS['message'].format(details=self.customer_details),
+            'header': VERIFY['header'],
+            'footer': VERIFY['footer'],
+            'buttons': VERIFY_DETAILS['options']['buttons']
+        }
+        return [self._create_interactive_message_from_config(verify_config)]
         
     def _handle_verification(self, message: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Handle verification of customer details."""
@@ -213,7 +216,7 @@ class MovingService(BaseConversationService):
                 self.conversation_manager.update_service_state(self.recipient, "awaiting_photos")
             else:
                 self.set_conversation_state("awaiting_photos")
-            return [self._create_interactive_message_from_config(self.responses['photos'])]
+            return [self._create_interactive_message_from_config(PHOTOS)]
         elif selected_option == 'לא':
             if self.conversation_manager:
                 self.conversation_manager.update_service_state(self.recipient, "awaiting_customer_details")
