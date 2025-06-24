@@ -1,60 +1,76 @@
 """Organization service responses."""
 from .common import NAVIGATION, SCHEDULING
 
-INITIAL = {
-    'header': 'שירות ארגון וסידור הבית',
-    'welcome': 'ברוכים הבאים לשירות הארגון המקצועי שלנו! איזה חלל בבית נעזור לך להפוך למסודר ונעים יותר?',
+DETAILS = """כדי שנוכל לוודא שאתם גרים בטווח השירות שלנו, אנא שלחו בהודעה חוזרת את כל הפרטים הבאים:
+
+שם מלא
+כתובת (עיר, רחוב ומספר בית)
+כתובת מייל
+ספרו בקצרה על ההרכב המשפחתי ואופי הסידור המבוקש:
+כל הבית, חדר מסוים, שינוי בין חדרים, הוספת פתרונות אחסון וכו׳
+"""
+
+VERIFY_DETAILS = {
+    'message': """אלו הפרטים שקיבלנו ממך:
+
+{details}
+
+האם הפרטים נכונים?""",
+    'options': {
+        'buttons': [
+            'כן, הפרטים נכונים',
+            'לא, צריך לתקן',
+            NAVIGATION['back_to_main'],
+            NAVIGATION['talk_to_representative']
+        ]
+    }
+}
+
+REWRITE_DETAILS = {
+    'header': 'ארגון וסידור הבית',
+    'body': DETAILS,
     'footer': '',
-    'options': {
-        'title': 'בחר/י את החלל הרצוי:',
-        'buttons': [
-            'חדר שינה וארונות בגדים',
-            'מטבח ואזורי אחסון',
-            'משרד ביתי',
-            NAVIGATION['back_to_main'],
-            NAVIGATION['talk_to_representative']
-        ]
-    }
-}
-
-PAIN_POINTS = {
-    'question': 'ספר/י לנו מה הכי מאתגר אותך במצב הנוכחי? איזה שינויים היית רוצה לראות?'
-}
-
-TIMING = {
-    'question': 'מתי נוח לך להתחיל בתהליך השינוי?',
-    'options': {
-        'title': 'בחר/י את המועד המועדף:',
-        'buttons': [
-            'בשבוע הקרוב',
-            'בחודש הקרוב',
-            'בעתיד, רק מתעניין/ת',
-            NAVIGATION['back_to_main'],
-            NAVIGATION['talk_to_representative']
-        ]
-    }
+    'buttons': [
+        NAVIGATION['back_to_main'],
+        NAVIGATION['talk_to_representative']
+    ]
 }
 
 COMPLETION = {
     'header': 'מוכנים להתחיל?',
-    'final': 'נהדר! הצעד הראשון הוא פגישת ייעוץ חינמית בה נכיר את המרחב שלך ונבנה יחד תכנית פעולה מותאמת אישית. נשמח לקבוע פגישה!',
-    'footer': '',
-    'schedule': {
-        **SCHEDULING,
-        'buttons': [
-            'בוקר',
-            'צהריים',
-            'ערב',
-            NAVIGATION['back_to_main'],
-            NAVIGATION['talk_to_representative']
-        ]
-    }
+    'after_media': """נהדר! הצעד הראשון הוא פגישת ייעוץ חינמית בה נכיר את המרחב שלך ונבנה יחד תכנית פעולה מותאמת אישית.
+כדי שנדע מתי להתקשר אליכם, אנא בחרו מועד נוח מהאפשרויות הבאות:""",
+    'footer': ''
+}
+
+SERVICE = {
+    'name': 'ארגון וסידור הבית'
+}
+
+VERIFY = {
+    'header': 'אימות פרטים',
+    'footer': ''
+}
+
+SCHEDULING = {
+    'header': 'תיאום שיחת טלפון',
+    'footer': ''
+}
+
+FALLBACK = {
+    'header': 'הפניה התקבלה',
+    'body': 'תודה על פנייתך! נציג מהצוות שלנו יצור איתך קשר בהקדם.',
+    'footer': ''
 }
 
 # Export all responses
 RESPONSES = {
-    'initial': INITIAL,
-    'awaiting_pain_points': PAIN_POINTS,
-    'awaiting_timing': TIMING,
-    'completed': COMPLETION
+    'initial': DETAILS,
+    'verify_details': VERIFY_DETAILS,
+    'completed': COMPLETION,
+    'verify': VERIFY,
+    'scheduling': SCHEDULING,
+    'fallback': FALLBACK,
+    'rewrite_details': REWRITE_DETAILS,
+    'service_name': SERVICE['name']
 }

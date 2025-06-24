@@ -6,15 +6,12 @@ from .organization_service import OrganizationService
 from .design_service import DesignService
 from .consultation_service import ConsultationService
 from .human_service import HumanSupportService
+from .service_factory import ServiceFactory, ServiceType
 
-
-
-# Map of service names to their corresponding classes
-SERVICE_MAP: Dict[str, Type[BaseConversationService]] = {
-    "מעבר דירה": MovingService,
-    "סידור וארגון": OrganizationService,
-    "אשמח לדבר עם נציג/ה": HumanSupportService
-}
+# Register services with the factory
+ServiceFactory.register(ServiceType.MOVING, MovingService)
+ServiceFactory.register(ServiceType.ORGANIZATION, OrganizationService)
+ServiceFactory.register(ServiceType.HUMAN_SUPPORT, HumanSupportService)
 
 
 def create_service(service_name: str, recipient: str) -> Optional[BaseConversationService]:

@@ -45,8 +45,13 @@ class WhatsAppClient:
             return response.json()
             
         except Exception as e:
-            print(f"Error sending request: {str(e)}\n")
-            raise
+            error_msg = {
+                'error': f"Error sending request: {str(e)}",
+                'requested_url': api_url,
+                'payload': payload
+            }
+            print("Request Error:", error_msg)
+            return error_msg
 
     @staticmethod
     def apply_label(phone_number: str, label_id: str) -> dict:

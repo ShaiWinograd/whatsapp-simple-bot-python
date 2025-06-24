@@ -9,10 +9,10 @@ from ...config.responses.common import GENERAL
 
 # Mapping between Hebrew button titles and ServiceType enum values
 SERVICE_TYPE_MAPPING = {
-    'מעבר דירה 🏠': ServiceType.MOVING,
-    'סידור וארגון ✨': ServiceType.ORGANIZATION,
-    'אשמח לדבר עם נציג/ה 👩‍💼': ServiceType.HUMAN_SUPPORT,
-    'אחר ❓': ServiceType.HUMAN_SUPPORT
+    'מעבר דירה': ServiceType.MOVING,
+    'סידור וארגון הבית': ServiceType.ORGANIZATION,
+    'אשמח לדבר עם נציג/ה': ServiceType.HUMAN_SUPPORT,
+    'אחר': ServiceType.HUMAN_SUPPORT
 }
 
 

@@ -3,31 +3,31 @@ from .common import NAVIGATION, SCHEDULING
 
 INITIAL = {
     'header': 'מעבר דירה',
-    'welcome': "נשמח ללוות אתכם במעבר הדירה הקרוב!\nבאיזה שירות תרצו להתמקד?",
+    'body': "נשמח ללוות אתכם במעבר הדירה הקרוב!\nבאיזה שירות תרצו להתמקד?",
     'footer': '',
-    'options': {
-        'buttons': [
-            'אריזת הבית',
-            'סידור בבית החדש',
-            'ליווי מלא - אריזה וסידור',
-            NAVIGATION['back_to_main'],
-            NAVIGATION['talk_to_representative']
-        ]
-    }
+    'buttons': [
+        'אריזת הבית',
+        'סידור בבית החדש',
+        'ליווי מלא - אריזה וסידור',
+        NAVIGATION['back_to_main'],
+        NAVIGATION['talk_to_representative']
+    ]
 }
 
-PRICE_QUOTE_BASE = """כדי שנוכל לשלוח הצעת מחיר מדויקת, אנא השיבו בהודעה את הפרטים הבאים:
+DETAILS_TEMPLATE = """כדי שנוכל לנוודא שאנחנו זמינים בתאריך המעבר ושהכתובת שלכם נמצאת בטווח השירות שלנו.
+אנא אנא שלחו בהודעה חוזרת את כל הפרטים הבאים:
 
 שם מלא
 {address_type}
 כתובת מייל
 תאריך הובלה מתוכנן
-* אם טרם נקבע תאריך הובלה, ציין/י תאריך משוער"""
 
-PRICE_QUOTE = {
+אם טרם נקבע תאריך הובלה, ציינו תאריך משוער"""
+
+DETAILS_COLLECTION = {
     'packing_only': {
         'header': 'אריזה',
-        'body': PRICE_QUOTE_BASE.format(
+        'body': DETAILS_TEMPLATE.format(
             address_type='כתובת נוכחית (כולל עיר, רחוב ומספר בית)',
         ),
         'footer': '',
@@ -38,7 +38,7 @@ PRICE_QUOTE = {
     },
     'unpacking_only': {
         'header': 'סידור אחרי המעבר',
-        'body': PRICE_QUOTE_BASE.format(
+        'body': DETAILS_TEMPLATE.format(
             address_type='כתובת חדשה (כולל עיר, רחוב ומספר בית)',
         ),
         'footer': '',
@@ -49,7 +49,7 @@ PRICE_QUOTE = {
     },
     'both': {
         'header': 'אריזה וסידור',
-        'body': PRICE_QUOTE_BASE.format(
+        'body': DETAILS_TEMPLATE.format(
             address_type='כתובת נוכחית וחדשה (כולל עיר, רחוב ומספר בית)',
         ),
         'footer': '',
@@ -122,10 +122,20 @@ FALLBACK = {
     'footer': ''
 }
 
+REWRITE_DETAILS = {
+    'header': 'עדכון פרטים',
+    'body': DETAILS_TEMPLATE,  # This will be formatted with address_type in the service
+    'footer': '',
+    'buttons': [
+        NAVIGATION['back_to_main'],
+        NAVIGATION['talk_to_representative']
+    ]
+}
+
 # Export all responses
 RESPONSES = {
     'initial': INITIAL,
-    'price_quote': PRICE_QUOTE,
+    'details_collection': DETAILS_COLLECTION,
     'verify_details': VERIFY_DETAILS,
     'photo_requirement': PHOTO_REQUIREMENT,
     'completed': COMPLETION,
@@ -133,5 +143,6 @@ RESPONSES = {
     'photos': PHOTOS,
     'scheduling': SCHEDULING,
     'fallback': FALLBACK,
+    'rewrite_details': REWRITE_DETAILS,
     'service_name': SERVICE['name']
 }

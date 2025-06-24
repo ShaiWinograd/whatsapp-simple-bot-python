@@ -28,11 +28,29 @@ class MessageRouter:
         Returns:
             List[Dict[str, Any]]: List of response payloads
         """
-        command_type = message.get('type', '').strip().lower()
-        
-        handler = self.handlers.get(command_type)
-        if handler:
-            return handler.handle(message, base_payload)
+        try:
+            command_type = message.get('type', '').strip().lower()
             
-        print(f"Unhandled message type: {command_type}")
-        return []
+            handler = self.handlers.get(command_type)
+            if handler:
+                try:
+                    return handler.handle(message, base_payload)
+                except Exception as e:
+                    print(f"Error in handler for type {command_type}: {str(e)}")
+                    return [TextMessageHandler(
+                        self.handlers['text'].conversation_manager,
+                        self.handlers['text'].service_factory
+                    ).create_text_message(base_payload["to"], "מצטערים, אירעה שגיאה. נא נסו שוב.")]
+            
+            print(f"Unhandled message type: {command_type}")
+            return [TextMessageHandler(
+                self.handlers['text'].conversation_manager,
+                self.handlers['text'].service_factory
+            ).create_text_message(base_payload["to"], "סוג ההודעה אינו נתמך כרגע")]
+            
+        except Exception as e:
+            print(f"Error routing message: {str(e)}")
+            return [TextMessageHandler(
+                self.handlers['text'].conversation_manager,
+                self.handlers['text'].service_factory
+            ).create_text_message(base_payload["to"], "מצטערים, אירעה שגיאה. נא נסו שוב.")]

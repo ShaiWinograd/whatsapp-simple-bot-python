@@ -1,273 +1,255 @@
 """Service for handling moving home conversation flow."""
 from typing import List, Dict, Any
 from .base_service import BaseConversationService
-from ..config.responses import SERVICE_RESPONSES, GENERAL
-from ..config.responses.common import NAVIGATION, CALL_SCHEDULING
-from ..config.whatsapp import LABELS
+from ..config.responses import SERVICE_RESPONSES
+from ..config.responses.common import NAVIGATION, GENERAL
 from ..utils.interactive_message_utils import get_button_title
-from ..utils.interactive_message_builder import create_interactive_message
-from ..utils.scheduling import get_available_slots
-from ..utils.whatsapp_client import WhatsAppClient
 
 
 class MovingService(BaseConversationService):
-    """Service for handling moving home related conversations."""
+    """Service for handling moving home related conversations with state management."""
 
     def __init__(self, recipient: str):
+        """
+        Initialize the MovingService.
+        
+        Args:
+            recipient (str): The recipient's phone number
+        """
         super().__init__(recipient)
-        self.service_type = None
-        self.customer_details = None
+        self.service_type: str | None = None
         self.responses = SERVICE_RESPONSES['moving']
 
     def get_service_name(self) -> str:
         return self.responses['service_name']
 
+
     def handle_initial_message(self) -> List[Dict[str, Any]]:
-        """
-        Handle initial moving service conversation.
-        
-        Returns:
-            List[Dict[str, Any]]: List of message payloads to send
-        """
-        self.set_conversation_state("awaiting_packing_choice")
-        print("\nCreating initial moving service message...")
-        initial_response = self.responses['initial']
-        
-        # Create list of button data
-        buttons = [
-            {"id": str(idx), "title": button}
-            for idx, button in enumerate(initial_response['options']['buttons'])
-        ]
-        print(f"Created button data: {buttons}")
-
-        payload = create_interactive_message(
-            recipient=self.recipient,
-            body_text=initial_response['welcome'],
-            header_text=initial_response['header'],
-            footer_text=initial_response['footer'],
-            buttons=buttons
-        )
-        print(f"Created initial moving service payload: {payload}")
-
-        return [payload]
+        """Handle initial moving service conversation."""
+        try:
+            self.set_conversation_state("awaiting_packing_choice")
+            print("\nCreating initial moving service message...")
+            
+            if 'initial' not in self.responses:
+                raise KeyError("Missing 'initial' configuration in responses")
+                
+            config = self.responses['initial']
+            if not config.get('body'):
+                raise KeyError("Missing 'body' field in initial configuration")
+                
+            payload = self._create_interactive_message_from_config(config)
+            print(f"Created initial moving service payload: {payload}")
+            return [payload]
+            
+        except Exception as e:
+            print(f"Error creating initial moving service message: {str(e)}")
+            return [self.create_text_message(GENERAL['error'])]
 
     def _create_photo_requirement_message(self) -> List[Dict[str, Any]]:
         """Create photo requirement messages with options."""
         photo_msg = self.create_text_message(self.responses['photo_requirement']['message'])
-        photo_options = create_interactive_message(
-            recipient=self.recipient,
-            body_text=self.responses['photo_requirement']['options']['title'],
-            header_text=self.responses['photos']['header'],
-            footer_text=self.responses['photos']['footer'],
-            buttons=[{"id": str(i), "title": btn} for i, btn in enumerate(self.responses['photo_requirement']['options']['buttons'])]
-        )
+        photo_options = self._create_interactive_message_with_options({
+            'header': self.responses['photos']['header'],
+            'footer': self.responses['photos']['footer'],
+            'options': self.responses['photo_requirement']['options']
+        })
         return [photo_msg, photo_options]
 
-    def _create_quote_message(self) -> Dict[str, Any]:
-        """Create quote message based on service type."""
-        quote_type = self.service_type
-        quote_config = self.responses['price_quote'][quote_type if quote_type == 'both' else f"{quote_type}_only"]
+    def _get_address_type_for_service(self) -> str:
+        """Get the appropriate address type text based on service type."""
+        if self.service_type == "packing":
+            return 'כתובת נוכחית (כולל עיר, רחוב ומספר בית)'
+        elif self.service_type == "unpacking":
+            return 'כתובת חדשה (כולל עיר, רחוב ומספר בית)'
+        else:  # both
+            return 'כתובת נוכחית וחדשה (כולל עיר, רחוב ומספר בית)'
+
+    def _create_details_message(self) -> Dict[str, Any]:
+        """Create details collection message based on service type."""
+        details_type = self.service_type if self.service_type == 'both' else f"{self.service_type}_only"
+        details_config = self.responses['details_collection'][details_type]
+        return self._create_interactive_message_from_config(details_config)
+
+    def _create_rewrite_details_message(self) -> Dict[str, Any]:
+        """Create rewrite details message with proper address type."""
+        rewrite_config = self.responses['rewrite_details']
+        address_type = self._get_address_type_for_service()
         
-        return create_interactive_message(
-            recipient=self.recipient,
-            body_text=quote_config['body'],
-            header_text=quote_config['header'],
-            footer_text=quote_config['footer'],
-            buttons=[{"id": str(i), "title": btn} for i, btn in enumerate(quote_config['buttons'])]
-        )
+        config = {
+            'body': rewrite_config['body'].format(address_type=address_type),
+            'header': rewrite_config['header'],
+            'footer': rewrite_config['footer'],
+            'buttons': rewrite_config['buttons']
+        }
+        return self._create_interactive_message_from_config(config)
 
     def _handle_packing_choice(self, message: Dict[str, Any]) -> List[Dict[str, Any]]:
-        """Handle packing choice state."""
+        """
+        Handle the packing choice state of the conversation.
+        
+        Args:
+            message (Dict[str, Any]): The incoming message from the user
+            
+        Returns:
+            List[Dict[str, Any]]: List of message payloads to send
+        """
         selected_option = get_button_title(message)
         option_map = {
-            "אריזה 📦": "packing",
-            "סידור אחרי המעבר 🏡": "unpacking",
-            "גם וגם ✨": "both"
+            "אריזת הבית": "packing",
+            "סידור בבית החדש": "unpacking",
+            "ליווי מלא - אריזה וסידור": "both",
+            NAVIGATION['back_to_main']: "back",
+            NAVIGATION['talk_to_representative']: "support"
         }
 
-        if selected_option in option_map:
+        if selected_option == NAVIGATION['back_to_main']:
+            return self.handle_initial_message()
+        elif selected_option == NAVIGATION['talk_to_representative']:
+            return []
+        elif selected_option in option_map:
             self.service_type = option_map[selected_option]
-            quote_msg = self._create_quote_message()
+            details_msg = self._create_details_message()
             self.set_conversation_state("awaiting_customer_details")
-            return [quote_msg]
+            return [details_msg]
         return [self.create_text_message(GENERAL['error'])]
 
     def _handle_customer_details(self, message: Dict[str, Any]) -> List[Dict[str, Any]]:
-        """Handle customer details state."""
-        text = message.get('text', {}).get('body', '')
-        if text:
-            # Save the details and create verification message
-            self.customer_details = text
-            verify_options = create_interactive_message(
-                recipient=self.recipient,
-                body_text=self.responses['verify_details']['message'].format(details=self.customer_details),
-                header_text=self.responses['verify']['header'],
-                footer_text=self.responses['verify']['footer'],
-                buttons=[{"id": str(i), "title": btn} for i, btn in enumerate(self.responses['verify_details']['options']['buttons'])]
-            )
-            # Set state to awaiting verification
-            self.set_conversation_state("awaiting_verification")
-            return [verify_options]
+        """
+        Handle the customer details collection state.
         
-        # If no text provided, send the quote message again
-        return [self._create_quote_message()]
+        Args:
+            message (Dict[str, Any]): The incoming message containing customer details
+            
+        Returns:
+            List[Dict[str, Any]]: List of message payloads to send
+        """
+        text = message.get('text', {}).get('body', '').strip()
+        
+        # Validate customer details
+        if not text:
+            return [self._create_details_message()]
+            
+        if len(text) < 20:  # Basic validation for minimum detail length
+            return [
+                self.create_text_message("בבקשה שלחו בהודעה אחת את כל הפרטים הנדרשים. לפי בדיקה שעשינו הפרטים שהתקבלו לא מספיקים."),
+                self._create_details_message()
+            ]
+            
+        # Save the details and create verification message
+        self.customer_details = text
+        self.set_conversation_state("awaiting_verification")
+        return [self._create_verification_message()]
 
     def _handle_verification(self, message: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Handle verification state."""
         button_title = get_button_title(message)
         
-        if button_title == 'כן, הפרטים נכונים ✅':
+        if button_title == 'כן, הפרטים נכונים':
             self.set_conversation_state("awaiting_photos")
             return self._create_photo_requirement_message()
-        elif button_title == 'לא, צריך לתקן ❌':
+        elif button_title == 'לא, צריך לתקן':
             # Reset details but keep the service type
             self.customer_details = None
             # Set state back to awaiting details
             self.set_conversation_state("awaiting_customer_details")
-            # Send message about rewriting details and then the quote message
-            return [
-                self.create_text_message("אנא כתבו שוב את כל הפרטים:"),
-                self._create_quote_message()
-            ]
+            # Send the rewrite details message with proper address type
+            return [self._create_rewrite_details_message()]
         return [self.create_text_message(GENERAL['error'])]
 
     def _handle_photos(self, message: Dict[str, Any]) -> List[Dict[str, Any]]:
-        """Handle photos state."""
-        print(f"DEBUG - Handling photo message: {message}")
+        """
+        Handle the photo collection state of the conversation.
         
-        # Handle navigation buttons first
-        button_title = get_button_title(message)
-        if button_title == NAVIGATION['back_to_main']:
-            return self.handle_initial_message()
-        elif button_title == NAVIGATION['talk_to_representative']:
-            return []  # Will be handled by parent service
-        elif button_title == 'מעדיפים לדלג':
-            # Proceed to slot selection without photos
-            print("DEBUG - User opted to skip photos, creating completion messages")
-            return self._create_completion_messages()
-        
-        # Check message type directly from root
-        message_type = message.get('type', '')
-        
-        if message_type in ['image', 'video']:
-            print("DEBUG - Image received, creating completion messages")
-            return self._create_completion_messages()
+        Args:
+            message (Dict[str, Any]): The incoming message containing photo, video, or button press
             
-        # If not an image/video or skip option, remind about photos and show options
-        return [
-            self.create_text_message(self.responses['photo_requirement']['message']),
-            create_interactive_message(
-                recipient=self.recipient,
-                body_text=self.responses['photo_requirement']['options']['title'],
-                header_text=self.responses['photos']['header'],
-                footer_text=self.responses['photos']['footer'],
-                buttons=[
-                    {"id": str(i), "title": btn} for i, btn in enumerate(self.responses['photo_requirement']['options']['buttons'])
-                ]
-            )
-        ]
-
-    def _handle_slot_selection(self, message: Dict[str, Any]) -> List[Dict[str, Any]]:
-        """Handle slot selection state."""
-        selected_slot = get_button_title(message)
-        
-        # Handle navigation options
-        if selected_slot == NAVIGATION['back_to_main']:
+        Returns:
+            List[Dict[str, Any]]: List of message payloads to send
+            
+        Note:
+            Accepts images, videos, or allows skipping the photo requirement.
+            Returns to photo requirement options if invalid input is received.
+        """
+        try:
+            # Handle navigation buttons first
+            button_title = get_button_title(message)
+            button_actions = {
+                NAVIGATION['back_to_main']: self.handle_initial_message,
+                NAVIGATION['talk_to_representative']: lambda: [],
+                'מעדיפים לדלג': self._create_completion_messages
+            }
+            
+            if button_title in button_actions:
+                return button_actions[button_title]()
+            
+            # Check message type directly from root
+            message_type = message.get('type', '')
+            valid_media_types = ['image', 'video']
+            
+            if message_type in valid_media_types:
+                # Could add media validation here if needed
+                media_id = message.get(message_type, {}).get('id')
+                if not media_id:
+                    raise ValueError(f"Invalid {message_type} message: missing media ID")
+                return self._create_completion_messages()
+                
+            # If not a valid submission, get photo requirement config
+            photo_config = self.responses.get('photo_requirement', {})
+            photos_config = self.responses.get('photos', {})
+            options_config = photo_config.get('options', {})
+            
+            if not all([photo_config, photos_config, options_config]):
+                raise ValueError("Missing required photo configuration")
+                
+            # Create reminder messages
+            return [
+                self.create_text_message(photo_config['message']),
+                self._create_interactive_message_with_options({
+                    'header': photos_config.get('header', ''),
+                    'footer': photos_config.get('footer', ''),
+                    'options': options_config
+                })
+            ]
+            
+        except Exception as e:
+            print(f"Error handling photos: {str(e)}")
             return [self.create_text_message(GENERAL['error'])]
-        elif selected_slot == NAVIGATION['talk_to_representative']:
-            # This will be handled by the parent service and ConversationManager
-            return []
-        elif selected_slot == 'שינוי מועד השיחה':
-            # Regenerate completion messages with new slots
-            return self._create_completion_messages()
-            
-        # Create confirmation message with option to change slot
-        confirmation_msg = create_interactive_message(
-            recipient=self.recipient,
-            body_text=CALL_SCHEDULING['confirmation']['body_template'].format(slot=selected_slot),
-            header_text=CALL_SCHEDULING['confirmation']['header'],
-            footer_text=CALL_SCHEDULING['confirmation']['footer'],
-            buttons=[{"id": "0", "title": CALL_SCHEDULING['confirmation']['change_slot_button']}]
-        )
-        return [confirmation_msg]
+
 
     def handle_response(self, message: Dict[str, Any]) -> List[Dict[str, Any]]:
-        """Handle user response based on current conversation state."""
-        state_handlers = {
+        """
+        Handle user response based on current conversation state.
+        
+        Args:
+            message (Dict[str, Any]): The incoming message from the user
+            
+        Returns:
+            List[Dict[str, Any]]: List of message payloads to send
+            
+        Note:
+            Validates current state and ensures proper state transitions.
+            Falls back to initial state if invalid state is encountered.
+        """
+        valid_states = {
             "awaiting_packing_choice": self._handle_packing_choice,
             "awaiting_customer_details": self._handle_customer_details,
             "awaiting_verification": self._handle_verification,
             "awaiting_photos": self._handle_photos,
             "awaiting_slot_selection": self._handle_slot_selection,
-            "completed": lambda _: []  # Return empty list when completed to avoid further messages
+            "completed": lambda _: []  # Return empty list when completed
         }
         
         current_state = self.get_conversation_state()
-        handler = state_handlers.get(current_state)
         
-        if handler:
-            return handler(message)
-        return [self.create_text_message(GENERAL['error'])]
-
-    def _create_completion_messages(self) -> List[Dict[str, Any]]:
-        """Helper method to create completion messages."""
-        print("DEBUG - Starting to create completion messages")
-        messages = []
-        
+        # Validate current state
+        if current_state not in valid_states:
+            print(f"Invalid state encountered: {current_state}")
+            self.set_conversation_state("awaiting_packing_choice")
+            return self.handle_initial_message()
+            
         try:
-            # Create final message explaining the phone call requirement
-            print("DEBUG - Getting completion message from responses")
-            print(f"DEBUG - Available response keys: {list(self.responses.keys())}")
-            completion_message = self.responses['completed']['after_media']
-            if not completion_message:
-                raise ValueError("Completion message is empty")
-            print(f"DEBUG - Got completion message: {completion_message[:50]}...")
-
-            # Get dynamic slots
-            print("DEBUG - Getting available slots")
-            available_slots = get_available_slots()
-            if not available_slots:
-                raise ValueError("No available slots returned")
-            print(f"DEBUG - Got {len(available_slots)} available slots")
-
-            # Add navigation options to the slots
-            print("DEBUG - Adding navigation options to slots")
-            available_slots.extend([
-                {"id": "main_menu", "title": NAVIGATION['back_to_main']},
-                {"id": "support", "title": NAVIGATION['talk_to_representative']}
-            ])
-            print(f"DEBUG - Total buttons after adding navigation: {len(available_slots)}")
-
-            # Create scheduling message
-            print("DEBUG - Creating interactive message")
-            schedule_msg = create_interactive_message(
-                recipient=self.recipient,
-                body_text=completion_message,
-                header_text=self.responses['scheduling']['header'],
-                footer_text=self.responses['scheduling']['footer'],
-                buttons=available_slots
-            )
-            if not schedule_msg:
-                raise ValueError("Failed to create interactive message")
-            messages.append(schedule_msg)
-            
-            # Set state to await slot selection
-            self.set_conversation_state("awaiting_slot_selection")
-            
-            print("DEBUG - Successfully created completion messages")
-            return messages
+            handler = valid_states[current_state]
+            return handler(message)
         except Exception as e:
-            print(f"ERROR in _create_completion_messages: {e}")
-            # Create a simpler fallback message without slots
-            fallback_msg = create_interactive_message(
-                recipient=self.recipient,
-                body_text=self.responses['fallback']['body'],
-                header_text=self.responses['fallback']['header'],
-                footer_text=self.responses['fallback']['footer'],
-                buttons=[
-                    {"id": "0", "title": NAVIGATION['back_to_main']},
-                    {"id": "1", "title": NAVIGATION['talk_to_representative']}
-                ]
-            )
-            return [fallback_msg]
-        
+            print(f"Error handling response in state {current_state}: {str(e)}")
+            return [self.create_text_message(GENERAL['error'])]

@@ -1,84 +1,114 @@
-"""Service for handling home organization conversation flow."""
+"""Service for handling organization conversation flow."""
 from typing import List, Dict, Any
-from ..models.webhook_payload import InteractiveMessagePayload
 from .base_service import BaseConversationService
 from ..config.responses import SERVICE_RESPONSES, GENERAL
-
+from ..config.responses.common import NAVIGATION
+from ..utils.interactive_message_utils import get_button_title
 
 
 class OrganizationService(BaseConversationService):
-    """Service for handling home organization related conversations."""
+    """Service for handling organization related conversations with state management."""
+
+    def __init__(self, recipient: str):
+        """
+        Initialize the OrganizationService.
+        
+        Args:
+            recipient (str): The recipient's phone number
+        """
+        super().__init__(recipient)
+        self.responses = SERVICE_RESPONSES['organization']
 
     def get_service_name(self) -> str:
-        return "סידור וארגון"
+        return self.responses['service_name']
+
 
     def handle_initial_message(self) -> List[Dict[str, Any]]:
+        """Handle initial organization service conversation."""
+        self.set_conversation_state("awaiting_customer_details")
+        print("\nCreating details collection message...")
+        return [self._create_details_message()]
+
+    def _create_details_message(self) -> Dict[str, Any]:
+        """Create details collection message."""
+        return self._create_interactive_message_from_config({
+            'body': self.responses['rewrite_details']['body'],
+            'header': self.responses['rewrite_details']['header'],
+            'footer': self.responses['rewrite_details']['footer'],
+            'buttons': self.responses['rewrite_details']['buttons']
+        })
+
+    def _handle_customer_details(self, message: Dict[str, Any]) -> List[Dict[str, Any]]:
         """
-        Handle initial organization service conversation.
+        Handle the customer details collection state.
         
+        Args:
+            message (Dict[str, Any]): The incoming message containing customer details
+            
         Returns:
             List[Dict[str, Any]]: List of message payloads to send
         """
-        self.set_conversation_state("awaiting_space_type")
-        responses = SERVICE_RESPONSES['organization']['initial']
+        text = message.get('text', {}).get('body', '').strip()
         
-        welcome_msg = self.create_text_message(responses['welcome'])
+        # Validate customer details
+        if not text:
+            return [self._create_details_message()]
+            
+        if len(text) < 25:  # Basic validation for minimum detail length
+            return [
+                self.create_text_message("בבקשה שלחו בהודעה אחת את כל הפרטים הנדרשים. לפי בדיקה שעשינו הפרטים שהתקבלו לא מספיקים."),
+                self._create_details_message()
+            ]
+            
+        # Save the details and create verification message
+        self.customer_details = text
+        self.set_conversation_state("awaiting_verification")
+        return [self._create_verification_message()]
+
+    def _handle_verification(self, message: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Handle verification state."""
+        button_title = get_button_title(message)
         
-        options_msg = InteractiveMessagePayload(
-            to=self.recipient,
-            header=responses['header'] if 'header' in responses else '✨ ארגון וסידור הבית ✨',
-            body=responses['options']['title'],
-            footer=responses['footer'] if 'footer' in responses else 'בחר/י את החלל שברצונך לארגן 🏠',
-            button_messages=responses['options']['buttons']
-        ).to_dict()
-        
-        return [welcome_msg, options_msg]
+        if button_title == 'כן, הפרטים נכונים':
+            return self._create_completion_messages()
+        elif button_title == 'לא, צריך לתקן':
+            # Reset details but keep the space type
+            self.customer_details = None
+            # Set state back to awaiting details
+            self.set_conversation_state("awaiting_customer_details")
+            # Send the rewrite details message
+            return [self._create_details_message()]
+        return [self.create_text_message(GENERAL['error'])]
+
 
     def handle_response(self, message: Dict[str, Any]) -> List[Dict[str, Any]]:
-        """Handle user response based on current conversation state."""
-        current_state = self.get_conversation_state()
-        responses = SERVICE_RESPONSES['organization']
+        """
+        Handle user response based on current conversation state.
         
-        if current_state == "awaiting_space_type":
-            response = message.get('interactive', {}).get('button_reply', {}).get('id', '')
-            self.set_conversation_state("awaiting_pain_points")
+        Args:
+            message (Dict[str, Any]): The incoming message from the user
             
-            pain_msg = self.create_text_message(
-                responses['awaiting_pain_points']['question']
-            )
-            return [pain_msg]
+        Returns:
+            List[Dict[str, Any]]: List of message payloads to send
+        """
+        valid_states = {
+            "awaiting_customer_details": self._handle_customer_details,
+            "awaiting_verification": self._handle_verification,
+            "awaiting_slot_selection": self._handle_slot_selection,
+            "completed": lambda _: []  # Return empty list when completed
+        }
+        
+        current_state = self.get_conversation_state()
+        
+        # Validate current state
+        if current_state not in valid_states:
+            print(f"Invalid state encountered: {current_state}")
+            self.set_conversation_state("awaiting_customer_details")
+            return self.handle_initial_message()
             
-        elif current_state == "awaiting_pain_points":
-            self.set_conversation_state("awaiting_timing")
-            timing_responses = responses['awaiting_timing']
-            
-            timing_msg = self.create_text_message(timing_responses['question'])
-            
-            options_msg = InteractiveMessagePayload(
-                to=self.recipient,
-                header='📅 מתי נוח לך?',
-                body=timing_responses['options']['title'],
-                footer='נמצא את התזמון המתאים ביותר עבורך ⭐',
-                button_messages=timing_responses['options']['buttons']
-            ).to_dict()
-            
-            return [timing_msg, options_msg]
-            
-        elif current_state == "awaiting_timing":
-            self.set_conversation_state("completed")
-            completion_responses = responses['completed']
-            
-            final_msg = self.create_text_message(completion_responses['final'])
-            
-            schedule_msg = InteractiveMessagePayload(
-                to=self.recipient,
-                header='📅 קביעת פגישת ייעוץ',
-                body=completion_responses['schedule']['title'],
-                footer='נמצא זמן שמתאים לשנינו! ✨',
-                button_messages=completion_responses['schedule']['buttons']
-            ).to_dict()
-            
-            return [final_msg, schedule_msg]
-            
-        # Default response if state is unknown
-        return [self.create_text_message(GENERAL['error'])]
+        try:
+            handler = valid_states[current_state]
+            return handler(message)
+        except Exception as e:
+            print(f"Error handling response in state {current_state}: {str(e)}")
+            return [self.create_text_message(GENERAL['error'])]

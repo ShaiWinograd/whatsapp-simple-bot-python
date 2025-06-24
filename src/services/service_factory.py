@@ -2,6 +2,7 @@ from enum import Enum
 from typing import Type, Dict
 
 from src.services.base_service import BaseConversationService
+from src.utils.errors import ConversationError
 
 class ServiceType(Enum):
     ORGANIZATION = "organization"
@@ -29,9 +30,12 @@ class ServiceFactory:
         Returns:
             BaseConversationService: An instance of the requested service type.
         Raises:
-            ValueError: If the service type is not registered.
+            ConversationError: If the service type is not registered or service creation fails.
         """
-        service_class = cls._services.get(service_type)
-        if not service_class:
-            raise ValueError(f"Unknown service type: {service_type}")
-        return service_class(recipient)
+        try:
+            service_class = cls._services.get(service_type)
+            if not service_class:
+                raise ValueError(f"Unknown service type: {service_type}")
+            return service_class(recipient)
+        except Exception as e:
+            raise ConversationError(f"Failed to create service: {str(e)}")
