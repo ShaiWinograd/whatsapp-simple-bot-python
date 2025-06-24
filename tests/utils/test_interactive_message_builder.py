@@ -15,13 +15,12 @@ def test_create_interactive_message_default():
     
     # Check body contains default welcome message
     expected_body = f"{GENERAL['intro']}\n\n{GENERAL['welcome_message']}"
-    assert result["text"]["body"] == expected_body
+    assert result["body"]["text"] == expected_body
     
     # Check header is default
     assert result["header"]["text"] == GENERAL['header']
     
-    # Check action and buttons
-    assert result["action"]["type"] == "button"
+    # Check buttons
     buttons = result["action"]["buttons"]
     assert len(buttons) == len(GENERAL['options'])
     for i, button in enumerate(buttons):
@@ -54,12 +53,11 @@ def test_create_interactive_message_custom():
     assert result["to"] == recipient
     
     # Check message components
-    assert result["text"]["body"] == body_text
+    assert result["body"]["text"] == body_text
     assert result["header"]["text"] == header_text
     assert result["footer"]["text"] == footer_text
     
-    # Check action and buttons
-    assert result["action"]["type"] == "button"
+    # Check buttons
     result_buttons = result["action"]["buttons"]
     assert len(result_buttons) == len(buttons)
     for i, button in enumerate(result_buttons):
@@ -83,8 +81,7 @@ def test_create_interactive_message_minimal():
     assert result["messaging_product"] == "whatsapp"
     assert result["recipient_type"] == "individual"
     assert result["to"] == recipient
-    assert result["text"]["body"] == body_text
-    assert result["action"]["type"] == "button"
+    assert result["body"]["text"] == body_text
     assert result["action"]["buttons"] == [{"type": "quick_reply", "id": "1", "title": "Button 1"}]
     
     # Check optional fields are not present

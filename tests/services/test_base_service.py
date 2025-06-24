@@ -80,8 +80,7 @@ def test_create_text_message(base_service):
     assert message['messaging_product'] == "whatsapp"
     assert message['recipient_type'] == "individual"
     assert message['to'] == "1234567890"
-    assert message['type'] == "text"
-    assert message['text']['body'] == "test message"
+    assert message['body']['text'] == "test message"
 
 
 def test_create_interactive_message_from_config(base_service):
@@ -98,10 +97,9 @@ def test_create_interactive_message_from_config(base_service):
     assert message['messaging_product'] == "whatsapp"
     assert message['recipient_type'] == "individual"
     assert message['to'] == "1234567890"
-    assert message['text']['body'] == 'Test body'
+    assert message['body']['text'] == 'Test body'
     assert message['header']['text'] == 'Test header'
     assert message['footer']['text'] == 'Test footer'
-    assert message['action']['type'] == "button"
     
     buttons = message['action']['buttons']
     assert buttons[0] == {"type": "quick_reply", "id": "0", "title": "Button 1"}
@@ -137,8 +135,7 @@ def test_create_verification_message(base_service):
     
     message = base_service._create_verification_message()
     
-    assert message['action']['type'] == "button"
-    assert 'Test details' in message['text']['body']
+    assert 'Test details' in message['body']['text']
     assert message['action']['buttons'][0] == {"type": "quick_reply", "id": "0", "title": "Yes"}
     assert message['action']['buttons'][1] == {"type": "quick_reply", "id": "1", "title": "No"}
 
@@ -155,22 +152,19 @@ def test_handle_slot_selection(base_service, mock_conversation_manager):
     message = {"interactive": {"button_reply": {"title": NAVIGATION['back_to_main']}}}
     response = base_service._handle_slot_selection(message)
     assert len(response) == 1
-    assert response[0]['action']['type'] == 'button'
-    assert response[0]['text']['body'] == "initial"
+    assert response[0]['body']['text'] == "initial"
     
     # Test invalid slot
     message = {"interactive": {"button_reply": {"title": ""}}}
     response = base_service._handle_slot_selection(message)
     assert len(response) == 1
-    assert response[0]['action']['type'] == 'button'
-    assert response[0]['text']['body'] == GENERAL['error']
-    
+    assert response[0]['body']['text'] == GENERAL['error']
+
     # Test valid slot selection
     message = {"interactive": {"button_reply": {"title": "10:00-11:00"}}}
     response = base_service._handle_slot_selection(message)
     assert len(response) == 1
-    assert response[0]['action']['type'] == 'button'
-    assert 'text' in response[0]
+    assert 'body' in response[0]
     assert 'buttons' in response[0]['action']
 
 
@@ -184,8 +178,7 @@ def test_handle_slot_selection_completion(base_service, mock_conversation_manage
     mock_conversation_manager.update_service_state.assert_called_with(
         "1234567890", "awaiting_slot_selection"
     )
-    assert response[0]['action']['type'] == 'button'
-    assert 'text' in response[0]
+    assert 'body' in response[0]
     assert 'buttons' in response[0]['action']
 
 
@@ -197,6 +190,5 @@ def test_slot_selection_without_manager(base_service_no_manager):
     response = base_service_no_manager._handle_slot_selection(message)
     
     assert base_service_no_manager.get_conversation_state() == "awaiting_slot_selection"
-    assert response[0]['action']['type'] == 'button'
-    assert 'text' in response[0]
+    assert 'body' in response[0]
     assert 'buttons' in response[0]['action']

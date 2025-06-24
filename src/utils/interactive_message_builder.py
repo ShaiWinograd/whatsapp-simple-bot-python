@@ -50,13 +50,18 @@ def create_interactive_message(
         "messaging_product": "whatsapp",
         "recipient_type": "individual",
         "to": recipient,
-        "text": {"body": body},
+        "body": {
+            "text": body
+        },
         "action": {
             "buttons": [
-                {"type": "quick_reply", "id": btn["id"], "title": btn["title"]}
+                {
+                    "type": "quick_reply",
+                    "title": btn["title"],
+                    "id": btn["id"]
+                }
                 for btn in button_list
-            ],
-            "type": "button"
+            ]
         }
     }
     

@@ -22,9 +22,8 @@ class TextMessagePayload(BaseWebhookPayload):
     def to_dict(self) -> Dict[str, Any]:
         payload = super().to_dict()
         payload.update({
-            "type": "text",
-            "text": {
-                "body": self.body
+            "body": {
+                "text": self.body
             }
         })
         return payload
@@ -58,27 +57,28 @@ class InteractiveMessagePayload(BaseWebhookPayload):
     def to_dict(self) -> Dict[str, Any]:
         """Convert to WhatsApp API format."""
         payload = super().to_dict()
-        payload["type"] = "button"
 
-        # Required text
-        payload["text"] = {"body": self.body_text}
+        # Required body
+        payload["body"] = {"text": self.body_text}
 
         # Optional header
         if self.header_text:
-            payload["header"] = self.header_text
+            payload["header"] = {"text": self.header_text}
 
         # Optional footer
         if self.footer_text:
-            payload["footer"] = self.footer_text
+            payload["footer"] = {"text": self.footer_text}
 
-        # Required buttons
-        payload["buttons"] = [
-            {
-                "type": "quick_reply",
-                "id": str(button["id"]),
-                "title": button["title"]
-            }
-            for button in self.buttons
-        ]
+        # Required buttons under action
+        payload["action"] = {
+            "buttons": [
+                {
+                    "type": "quick_reply",
+                    "id": str(button["id"]),
+                    "title": button["title"]
+                }
+                for button in self.buttons
+            ]
+        }
 
         return payload

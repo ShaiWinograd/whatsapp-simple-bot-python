@@ -56,9 +56,9 @@ def test_handle_initial_message_with_manager(organization_service, mock_conversa
         "1234567890", "awaiting_customer_details"
     )
     assert len(messages) == 1
+    assert 'body' in messages[0]
     assert 'action' in messages[0]
-    assert messages[0]['action']['type'] == 'button'
-    assert 'text' in messages[0]
+    assert 'buttons' in messages[0]['action']
 
 
 def test_handle_initial_message_without_manager(organization_service_no_manager):
@@ -67,9 +67,9 @@ def test_handle_initial_message_without_manager(organization_service_no_manager)
     
     assert organization_service_no_manager.get_conversation_state() == "awaiting_customer_details"
     assert len(messages) == 1
+    assert 'body' in messages[0]
     assert 'action' in messages[0]
-    assert messages[0]['action']['type'] == 'button'
-    assert 'text' in messages[0]
+    assert 'buttons' in messages[0]['action']
 
 
 def test_handle_customer_details_invalid(organization_service):
@@ -81,7 +81,7 @@ def test_handle_customer_details_invalid(organization_service):
     # Test too short message
     messages = organization_service._handle_customer_details({"text": {"body": "short"}})
     assert len(messages) == 2
-    assert "לא מספיקים" in messages[0]['text']['body']
+    assert "לא מספיקים" in messages[0]['body']['text']
 
 
 def test_handle_customer_details_valid_with_manager(organization_service, mock_conversation_manager):
@@ -174,4 +174,4 @@ def test_handle_response_error(organization_service):
     messages = organization_service.handle_response({})
     
     assert len(messages) == 1
-    assert messages[0]['text']['body'] == GENERAL['error']
+    assert messages[0]['body']['text'] == GENERAL['error']
