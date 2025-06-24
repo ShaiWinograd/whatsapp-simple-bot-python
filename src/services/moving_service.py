@@ -4,6 +4,7 @@ from .base_service import BaseConversationService
 from ..config.responses import SERVICE_RESPONSES
 from ..config.responses.common import NAVIGATION, GENERAL
 from ..utils.interactive_message_utils import get_button_title
+from ..models.webhook_payload import TextMessagePayload
 
 
 class MovingService(BaseConversationService):
@@ -48,12 +49,8 @@ class MovingService(BaseConversationService):
             
         except Exception as e:
             print(f"Error creating initial moving service message: {str(e)}")
-            # Return error message directly using TextMessagePayload to avoid recursion
-            payload = TextMessagePayload(
-                to=self.recipient,
-                body=GENERAL['error']
-            ).to_dict()
-            return [payload]
+            # Use base class method to create error message
+            return [self.create_text_message(GENERAL['error'])]
 
     def _reset_to_main_menu(self) -> List[Dict[str, Any]]:
         """Reset service state and return to main menu."""
