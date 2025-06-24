@@ -69,7 +69,7 @@ class InteractiveMessageHandler(MessageHandlerBase):
 
             if selected_option == 'אשמח לדבר עם נציג/ה':
                 print("User requested human support")
-                service = self.service_factory.create(ServiceType.HUMAN_SUPPORT, recipient)
+                service = self.service_factory.create(ServiceType.HUMAN_SUPPORT, recipient, self.conversation_manager)
                 self.conversation_manager.add_conversation(recipient, service)
                 return service.handle_initial_message()
 
@@ -79,7 +79,7 @@ class InteractiveMessageHandler(MessageHandlerBase):
                 try:
                     service_type = SERVICE_TYPE_MAPPING[selected_option]
                     print(f"Creating service of type: {service_type}")
-                    service = self.service_factory.create(service_type, recipient)
+                    service = self.service_factory.create(service_type, recipient, self.conversation_manager)
                     self.conversation_manager.add_conversation(recipient, service)
                     return service.handle_initial_message()
                 except ConversationError as e:

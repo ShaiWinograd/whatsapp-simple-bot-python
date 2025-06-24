@@ -22,11 +22,12 @@ class ServiceFactory:
         cls._services[service_type] = service_class
     
     @classmethod
-    def create(cls, service_type: ServiceType, recipient: str) -> BaseConversationService:
+    def create(cls, service_type: ServiceType, recipient: str, conversation_manager=None) -> BaseConversationService:
         """Create an instance of the requested service type.
         Args:
             service_type (ServiceType): The type of service to create.
             recipient (str): The recipient's phone number.
+            conversation_manager: Optional conversation manager instance.
         Returns:
             BaseConversationService: An instance of the requested service type.
         Raises:
@@ -36,6 +37,6 @@ class ServiceFactory:
             service_class = cls._services.get(service_type)
             if not service_class:
                 raise ValueError(f"Unknown service type: {service_type}")
-            return service_class(recipient)
+            return service_class(recipient, conversation_manager)
         except Exception as e:
             raise ConversationError(f"Failed to create service: {str(e)}")

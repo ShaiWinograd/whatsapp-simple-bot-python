@@ -2,7 +2,7 @@
 import pytest
 from src.services.base_service import BaseConversationService
 from src.config.responses.common import NAVIGATION, GENERAL
-from src.utils.whatsapp_client import WhatsAppClient
+from src.chat.conversation_manager import ConversationManager
 
 
 class TestService(BaseConversationService):
@@ -19,25 +19,55 @@ class TestService(BaseConversationService):
 
 
 @pytest.fixture
-def base_service():
-    """Fixture for creating a TestService instance."""
+def mock_conversation_manager(mocker):
+    """Fixture for creating a mocked ConversationManager."""
+    manager = mocker.Mock(spec=ConversationManager)
+    return manager
+
+
+@pytest.fixture
+def base_service(mock_conversation_manager):
+    """Fixture for creating a TestService instance with conversation manager."""
+    return TestService(recipient="1234567890", conversation_manager=mock_conversation_manager)
+
+
+@pytest.fixture
+def base_service_no_manager():
+    """Fixture for creating a TestService instance without conversation manager."""
     return TestService(recipient="1234567890")
 
 
-def test_initialization(base_service):
-    """Test BaseConversationService initialization."""
+def test_initialization_with_manager(base_service, mock_conversation_manager):
+    """Test BaseConversationService initialization with conversation manager."""
     assert base_service.recipient == "1234567890"
     assert base_service.conversation_state == "initial"
     assert base_service.customer_details is None
-    assert base_service.current_label is None
+    assert base_service.conversation_manager == mock_conversation_manager
 
 
-def test_conversation_state_management(base_service):
-    """Test conversation state getters and setters."""
-    assert base_service.get_conversation_state() == "initial"
-    
+def test_initialization_without_manager(base_service_no_manager):
+    """Test BaseConversationService initialization without conversation manager."""
+    assert base_service_no_manager.recipient == "1234567890"
+    assert base_service_no_manager.conversation_state == "initial"
+    assert base_service_no_manager.customer_details is None
+    assert base_service_no_manager.conversation_manager is None
+
+
+def test_conversation_state_with_manager(base_service, mock_conversation_manager):
+    """Test conversation state management with conversation manager."""
     base_service.set_conversation_state("new_state")
+    mock_conversation_manager.update_service_state.assert_called_once_with(
+        "1234567890", "new_state"
+    )
     assert base_service.get_conversation_state() == "new_state"
+
+
+def test_conversation_state_without_manager(base_service_no_manager):
+    """Test conversation state management without conversation manager."""
+    assert base_service_no_manager.get_conversation_state() == "initial"
+    
+    base_service_no_manager.set_conversation_state("new_state")
+    assert base_service_no_manager.get_conversation_state() == "new_state"
 
 
 def test_create_text_message(base_service):
@@ -112,7 +142,7 @@ def test_create_verification_message_without_details(base_service):
         base_service._create_verification_message()
 
 
-def test_handle_slot_selection(base_service):
+def test_handle_slot_selection(base_service, mock_conversation_manager):
     """Test slot selection handling."""
     # Test back to main menu
     message = {"interactive": {"button_reply": {"title": NAVIGATION['back_to_main']}}}
@@ -133,27 +163,25 @@ def test_handle_slot_selection(base_service):
     assert 'interactive' in response[0]
 
 
-@pytest.mark.asyncio
-async def test_apply_service_label(base_service, mocker):
-    """Test service label application."""
-    # Mock WhatsAppClient methods
-    mocker.patch.object(WhatsAppClient, 'apply_label')
-    mocker.patch.object(WhatsAppClient, 'remove_label')
+def test_handle_slot_selection_completion(base_service, mock_conversation_manager):
+    """Test slot selection completion state handling."""
+    slot = "10:00-11:00"
+    message = {"interactive": {"button_reply": {"title": slot}}}
     
-    # Test applying new label
-    base_service._apply_service_label('test_label')
+    response = base_service._handle_slot_selection(message)
     
-    # Verify WhatsAppClient calls
-    WhatsAppClient.apply_label.assert_called_once()
-    WhatsAppClient.remove_label.assert_not_called()
+    mock_conversation_manager.update_service_state.assert_called_with(
+        "1234567890", "awaiting_slot_selection"
+    )
+    assert 'interactive' in response[0]
+
+
+def test_slot_selection_without_manager(base_service_no_manager):
+    """Test slot selection without conversation manager."""
+    slot = "10:00-11:00"
+    message = {"interactive": {"button_reply": {"title": slot}}}
     
-    # Reset mock counts
-    WhatsAppClient.apply_label.reset_mock()
-    WhatsAppClient.remove_label.reset_mock()
+    response = base_service_no_manager._handle_slot_selection(message)
     
-    # Test changing label
-    base_service._apply_service_label('new_label')
-    
-    # Verify both remove and apply were called
-    WhatsAppClient.remove_label.assert_called_once()
-    WhatsAppClient.apply_label.assert_called_once()
+    assert base_service_no_manager.get_conversation_state() == "awaiting_slot_selection"
+    assert 'interactive' in response[0]

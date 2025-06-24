@@ -18,13 +18,6 @@ class BaseMessageHandler(MessageHandlerBase):
         Returns:
             List[Dict[str, Any]]: List of message payloads to send
         """
-        # Apply bot new conversation label
-        if WHATSAPP_LABELS['bot_new_conversation']:
-            WhatsAppClient.apply_label(
-                recipient,
-                WHATSAPP_LABELS['bot_new_conversation']
-            )
-
         # Create welcome payload using interactive handler
         from .interactive_handler import InteractiveMessageHandler
         interactive_handler = InteractiveMessageHandler(self.conversation_manager, self.service_factory)

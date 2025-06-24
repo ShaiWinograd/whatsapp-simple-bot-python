@@ -3,52 +3,12 @@
 ## Overview
 The moving service provides a conversational interface for users to request moving services, including packing, unpacking, or both. The flow is designed to collect necessary information while providing a smooth user experience.
 
-## Conversation Flow Diagram
-
-```mermaid
-graph TD
-    A[Initial Contact] --> B{Service Selection}
-    B -->|Packing| C[Details Collection]
-    B -->|Unpacking| C
-    B -->|Both| C
-    B -->|Talk to Rep| R[Representative]
-    B -->|Main Menu| M[Main Menu]
-    
-    C --> D{Verify Details}
-    D -->|Correct| E[Photo Stage]
-    D -->|Incorrect| C
-    D -->|Talk to Rep| R
-    D -->|Main Menu| M
-    
-    E -->|Send Photos| F[Call Scheduling]
-    E -->|Skip Photos| F
-    E -->|Talk to Rep| R
-    E -->|Main Menu| M
-    
-    F -->|Select Slot| G[Completion]
-    F -->|Change Slot| F
-    F -->|Talk to Rep| R
-    F -->|Main Menu| M
-```
-
-## Service Options
-1. **Packing Only (אריזת הבית)** 
-   - Assistance with packing current home
-   - Requires current address details
-   
-2. **Unpacking Only (סידור בבית החדש)**
-   - Assistance with organizing new home
-   - Requires new address details
-
-3. **Full Service (ליווי מלא - אריזה וסידור)**
-   - Complete moving assistance
-   - Requires both current and new address details
-
-## Detailed Flow
+## State Flow
 
 ### 1. Initial Contact
-- User sends any message
-- System applies `bot_new_conversation` label
+- New message triggers the service
+- System applies "new conversation bot" label
+- System applies "moving" label when moving service is selected
 - Welcome message displays with header "מעבר דירה"
 - Initial state: `awaiting_packing_choice`
 - Options presented:
@@ -59,7 +19,7 @@ graph TD
   * Talk to representative
 
 ### 2. Details Collection
-Each service type requires specific information:
+State: `awaiting_customer_details`
 
 **Required for All Services:**
 - Full name
@@ -71,101 +31,117 @@ Each service type requires specific information:
 - Unpacking Only: New address (city, street, house number)
 - Both Services: Both current and new addresses
 
+**Validation:**
+- Minimum 20 characters required
+- If details are too short:
+  * Error message displayed
+  * Details collection form shown again
+
 ### 3. Details Verification
-- Header: "אימות פרטים ✅"
+State: `awaiting_verification`
+
 - System displays collected information
 - User options:
-  * "כן, הפרטים נכונים" (Confirm)
-  * "לא, צריך לתקן" (Edit)
+  * "כן, הפרטים נכונים" (Proceed to photos)
+  * "לא, צריך לתקן" (Return to details collection)
   * Back to main menu
   * Talk to representative
 
-### 4. Photo/Video Collection
-Header: "שליחת תמונות 📸"
+### 4. Photo Collection
+State: `awaiting_photos`
 
-**Photo Requirements:**
-- Focus on open cabinets/closets
-- Kitchen storage areas
-- General home views
+**Options:**
+- Send photos/videos
+- Skip photos ("מעדיפים לדלג")
+- Back to main menu
+- Talk to representative
 
 **Important Notes:**
 - Photos are for quote purposes only
-- Images are not stored permanently
-- Users can either:
-  * Send photos/videos
-  * Skip this step ("מעדיפים לדלג")
-  * Return to main menu
-  * Request representative contact
+- Accepts both images and videos
+- Photos are not stored permanently
 
 ### 5. Call Scheduling
-Header: "תיאום שיחת טלפון 📞"
+State: `awaiting_slot_selection`
 
-**Normal Flow:**
-1. System explains need for brief coordination call
-2. Displays dynamically generated time slots
-3. User selects preferred time
-4. Confirmation message shows selected slot
-5. Option to change time: "שינוי מועד השיחה"
-
-**Fallback Flow** (if slot generation fails):
-- Header: "✅ הפניה התקבלה"
-- Basic confirmation message
-- Options to:
-  * Return to main menu
+- System displays available time slots
+- Options include:
+  * Same day slots (12:00-14:00, 14:00-16:00, 16:00-18:00)
+  * Next day slots (10:00-12:00, 12:00-14:00)
+  * Back to main menu
   * Talk to representative
+
+### 6. Slot Confirmation
+State: `completed`
+- Displays selected time slot
+- Option to reschedule (returns to slot selection)
+- Back to main menu
+- Talk to representative
+
+## Emergency Support Flow
+Available at any point when "Talk to Representative" is selected:
+
+1. Emergency question displayed: "האם הפנייה דחופה ודורשת שיחה מנציג כמה שיותר מהר?"
+2. User options:
+   - Yes: 
+     * Remove "new conversation" label
+     * Apply "waiting_urgent_support" label
+     * Message: Support will contact shortly
+   - No: 
+     * Proceed to regular call scheduling flow
 
 ## Label Management
 
 ### Label Transitions
-- Initial: `bot_new_conversation`
-- Support Request:
-  * Removes: `bot_new_conversation`
-  * Applies: `waiting_for_support_urgent`
-- Scheduled Call:
-  * Removes: `bot_new_conversation`
-  * Applies: `waiting_call_before_quote`
+1. Initial Contact:
+   - Apply "new conversation bot" label
 
-## Navigation & Error Handling
+2. Service Selection:
+   - Apply "moving" label
 
-### Global Navigation
-Available throughout the flow:
-- Return to main menu
-- Talk to representative option
-- Back (context-aware)
+3. Call Scheduled:
+   - Remove "new conversation" label
+   - Apply "waiting for call" label
 
-### Error Handling
-1. **Invalid Inputs:**
-   - State-specific validation
-   - Clear error messages
-   - Maintains user progress
+4. Urgent Support:
+   - Remove "new conversation" label
+   - Apply "waiting_urgent_support" label
 
-2. **Scheduling Issues:**
-   - Graceful fallback to basic confirmation
-   - Always provides way to contact support
+5. Main Menu Return:
+   - Remove all service-specific labels
+   - Keep only "new conversation bot" label
 
-3. **System Safeguards:**
-   - State validation
-   - Input type checking
-   - Service type preservation
+## Navigation
+- "Return to main menu" option available throughout the flow
+  * Returns to welcome message
+  * Resets labels to only "new conversation bot"
+  * Removes any other active labels
 
 ## State Machine
 ```mermaid
 stateDiagram-v2
-    [*] --> awaiting_packing_choice
+    [*] --> awaiting_packing_choice: New Message
     awaiting_packing_choice --> awaiting_customer_details: Service Selected
-    awaiting_customer_details --> awaiting_verification: Details Provided
+    awaiting_customer_details --> awaiting_verification: Valid Details
     awaiting_verification --> awaiting_photos: Details Confirmed
     awaiting_verification --> awaiting_customer_details: Details Incorrect
-    awaiting_photos --> awaiting_slot_selection: Photos Sent/Skipped
+    awaiting_photos --> awaiting_slot_selection: Photos/Skip
     awaiting_slot_selection --> completed: Slot Selected
-    completed --> awaiting_slot_selection: Change Slot
+    completed --> awaiting_slot_selection: Reschedule
     
-    state "Error Handling" as error
-    awaiting_packing_choice --> error: Invalid Input
-    awaiting_customer_details --> error: Invalid Input
-    awaiting_slot_selection --> error: Invalid Input
+    state "Emergency Support" as emergency
+    [*] --> emergency: Talk to Rep
+    emergency --> awaiting_slot_selection: Not Urgent
+    emergency --> [*]: Urgent
     
-    error --> [*]: To Support
+    state "Main Menu" as main
+    [*] --> main: Back to Main
+    awaiting_packing_choice --> main
+    awaiting_customer_details --> main
+    awaiting_verification --> main
+    awaiting_photos --> main
+    awaiting_slot_selection --> main
+    completed --> main
 ```
 
-This documentation represents the complete flow of the moving service conversation, including all possible paths, error handling, and state transitions. The visual diagrams help illustrate the user journey and system behavior at each stage.
+This documentation represents the complete flow of the moving service conversation, including all possible paths, error handling, and state transitions.

@@ -12,7 +12,7 @@ from ..utils.scheduling import get_available_slots
 class BaseConversationService(ABC):
     """Base class for handling specific conversation flows."""
     
-    def __init__(self, recipient: str):
+    def __init__(self, recipient: str, conversation_manager=None):
         """
         Initialize the service.
         
@@ -23,7 +23,7 @@ class BaseConversationService(ABC):
         self.conversation_state = "initial"
         self.customer_details: str | None = None
         self.responses: Dict[str, Any] = {}
-        self.current_label = None
+        self.conversation_manager = conversation_manager
     
     @abstractmethod
     def get_service_name(self) -> str:
@@ -75,6 +75,8 @@ class BaseConversationService(ABC):
             state (str): New state to set
         """
         self.conversation_state = state
+        if self.conversation_manager:
+            self.conversation_manager.update_service_state(self.recipient, state)
 
     def _create_interactive_message_from_config(self, config: Dict[str, Any], buttons_key: str = 'buttons') -> Dict[str, Any]:
         """
@@ -122,21 +124,19 @@ class BaseConversationService(ABC):
             
         try:
             verify_details = self.responses.get('verify_details', {})
-            verify_config = self.responses.get('verify', {})
-            
-            if not verify_details or not verify_config:
+            verify_config = {
+                'body': (verify_details['message'] if isinstance(verify_details, dict) and 'message' in verify_details
+                        else verify_details).format(details=self.customer_details),
+                'header': self.responses.get('verify', {}).get('header', ''),
+                'footer': self.responses.get('verify', {}).get('footer', ''),
+                'buttons': verify_details.get('options', {}).get('buttons', []) if isinstance(verify_details, dict)
+                          else []
+            }
+
+            if not verify_config['body']:
                 raise ValueError("Verification configuration is missing")
-                
-            return create_interactive_message(
-                recipient=self.recipient,
-                body_text=verify_details['message'].format(details=self.customer_details),
-                header_text=verify_config.get('header', ''),
-                footer_text=verify_config.get('footer', ''),
-                buttons=[
-                    {"id": str(i), "title": btn}
-                    for i, btn in enumerate(verify_details.get('options', {}).get('buttons', []))
-                ]
-            )
+
+            return self._create_interactive_message_from_config(verify_config)
         except Exception as e:
             print(f"Error creating verification message: {str(e)}")
             raise
@@ -153,6 +153,9 @@ class BaseConversationService(ABC):
         """
         selected_slot = get_button_title(message)
         
+        # Set state to awaiting_slot_selection
+        self.set_conversation_state("awaiting_slot_selection")
+
         # Create response map for better maintainability
         response_map = {
             NAVIGATION['back_to_main']: lambda: self.handle_initial_message(),
@@ -180,33 +183,6 @@ class BaseConversationService(ABC):
             print(f"Error creating slot confirmation message: {str(e)}")
             return [self.create_text_message(GENERAL['error'])]
 
-    def _apply_service_label(self, label_key: str) -> None:
-        """
-        Apply a service-specific label and remove previous one if exists.
-        
-        Args:
-            label_key (str): Key for the label in LABELS config
-        """
-        from ..config.whatsapp import LABELS
-        if self.current_label and self.current_label in LABELS:
-            WhatsAppClient.remove_label(self.recipient, LABELS[self.current_label])
-        if label_key in LABELS:
-            WhatsAppClient.apply_label(self.recipient, LABELS[label_key])
-            self.current_label = label_key
-
-    def _remove_label(self, label_key: str) -> None:
-        """
-        Remove a service-specific label.
-        
-        Args:
-            label_key (str): Key for the label in LABELS config
-        """
-        from ..config.whatsapp import LABELS
-        if label_key in LABELS:
-            WhatsAppClient.remove_label(self.recipient, LABELS[label_key])
-            if self.current_label == label_key:
-                self.current_label = None
-
     def _create_completion_messages(self) -> List[Dict[str, Any]]:
         """
         Create completion messages with available time slots.
@@ -214,8 +190,8 @@ class BaseConversationService(ABC):
         Returns:
             List[Dict[str, Any]]: List of completion messages
         """
-        # Apply waiting for call label
-        self._apply_service_label('waiting_call_before_quote')
+        if self.conversation_manager:
+            self.conversation_manager.update_service_state(self.recipient, "completed")
         messages = []
         
         try:
@@ -247,7 +223,8 @@ class BaseConversationService(ABC):
                 raise ValueError("Failed to create interactive scheduling message")
 
             messages.append(schedule_msg)
-            self.set_conversation_state("awaiting_slot_selection")
+            if self.conversation_manager:
+                self.conversation_manager.update_service_state(self.recipient, "awaiting_slot_selection")
             
             return messages
             

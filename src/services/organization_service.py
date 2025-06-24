@@ -9,15 +9,26 @@ from ..utils.interactive_message_utils import get_button_title
 class OrganizationService(BaseConversationService):
     """Service for handling organization related conversations with state management."""
 
-    def __init__(self, recipient: str):
+    def __init__(self, recipient: str, conversation_manager=None):
         """
         Initialize the OrganizationService.
         
         Args:
             recipient (str): The recipient's phone number
+            conversation_manager: Optional conversation manager instance
         """
-        super().__init__(recipient)
+        super().__init__(recipient, conversation_manager)
         self.responses = SERVICE_RESPONSES['organization']
+
+    def _apply_service_label(self, label: str) -> None:
+        """
+        Apply service label to conversation if manager exists.
+        
+        Args:
+            label (str): Service label to apply
+        """
+        if self.conversation_manager:
+            self.conversation_manager.apply_service_label(self.recipient, label)
 
     def get_service_name(self) -> str:
         return self.responses['service_name']
@@ -33,11 +44,18 @@ class OrganizationService(BaseConversationService):
 
     def _create_details_message(self) -> Dict[str, Any]:
         """Create details collection message."""
+        details_config = self.responses['rewrite_details']
+        # Format the body template if needed
+        if '{' in details_config['body']:
+            formatted_body = details_config['body'].format(details_template=self.responses['details_template'])
+        else:
+            formatted_body = details_config['body']
+            
         return self._create_interactive_message_from_config({
-            'body': self.responses['rewrite_details']['body'],
-            'header': self.responses['rewrite_details']['header'],
-            'footer': self.responses['rewrite_details']['footer'],
-            'buttons': self.responses['rewrite_details']['buttons']
+            'body': formatted_body,
+            'header': details_config['header'],
+            'footer': details_config['footer'],
+            'buttons': details_config['buttons']
         })
 
     def _handle_customer_details(self, message: Dict[str, Any]) -> List[Dict[str, Any]]:
@@ -50,7 +68,10 @@ class OrganizationService(BaseConversationService):
         Returns:
             List[Dict[str, Any]]: List of message payloads to send
         """
-        text = message.get('text', {}).get('body', '').strip()
+        try:
+            text = message.get('text', {}).get('body', '').strip()
+        except (AttributeError, KeyError):
+            return [self.create_text_message(GENERAL['error'])]
         
         # Validate customer details
         if not text:
@@ -72,7 +93,13 @@ class OrganizationService(BaseConversationService):
         button_title = get_button_title(message)
         
         if button_title == 'כן, הפרטים נכונים':
-            return self._create_completion_messages()
+            # Different behavior based on whether we have a conversation manager
+            if self.conversation_manager:
+                self.set_conversation_state("completed")
+                return [self.create_text_message("תודה! נציג שלנו יצור איתך קשר בקרוב.")]
+            else:
+                self.set_conversation_state("awaiting_slot_selection")
+                return [self.create_text_message("תודה! אנא בחר מועד מתאים לשיחה:")]
         elif button_title == 'לא, צריך לתקן':
             # Reset details but keep the space type
             self.customer_details = None
@@ -93,10 +120,13 @@ class OrganizationService(BaseConversationService):
         Returns:
             List[Dict[str, Any]]: List of message payloads to send
         """
+        # Early validation of message
+        if not message or not isinstance(message, dict):
+            return [self.create_text_message(GENERAL['error'])]
+            
         valid_states = {
             "awaiting_customer_details": self._handle_customer_details,
             "awaiting_verification": self._handle_verification,
-            "awaiting_slot_selection": self._handle_slot_selection,
             "completed": lambda _: []  # Return empty list when completed
         }
         
@@ -111,6 +141,9 @@ class OrganizationService(BaseConversationService):
         try:
             handler = valid_states[current_state]
             return handler(message)
+        except KeyError as e:
+            print(f"KeyError in state {current_state}: {str(e)}")
+            return [self.create_text_message(GENERAL['error'])]
         except Exception as e:
             print(f"Error handling response in state {current_state}: {str(e)}")
             return [self.create_text_message(GENERAL['error'])]
