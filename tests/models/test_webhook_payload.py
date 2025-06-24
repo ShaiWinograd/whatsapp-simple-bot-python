@@ -41,21 +41,19 @@ def test_interactive_message_payload():
     result = payload.to_dict()
     
     # Check main structure
-    assert result["type"] == "interactive"
+    assert result["type"] == "button"
     assert result["messaging_product"] == "whatsapp"
     assert result["recipient_type"] == "individual"
     assert result["to"] == "1234567890"
     
     # Check message components
-    assert result["body"]["text"] == "Test body"
-    assert result["header"]["text"] == "Test header"
-    assert result["footer"]["text"] == "Test footer"
+    assert result["text"]["body"] == "Test body"
+    assert result["header"] == "Test header"
+    assert result["footer"] == "Test footer"
     
-    # Check action
-    assert "action" in result
-    action = result["action"]
-    assert "buttons" in action
-    buttons = action["buttons"]
+    # Check buttons
+    assert "buttons" in result
+    buttons = result["buttons"]
     assert len(buttons) == 2
     assert all(b["type"] == "quick_reply" for b in buttons)
     assert buttons[0] == {"type": "quick_reply", "id": "1", "title": "Button 1"}
@@ -73,9 +71,9 @@ def test_interactive_message_payload_minimal():
     result = payload.to_dict()
     
     # Check required fields
-    assert result["type"] == "interactive"
-    assert result["body"]["text"] == "Test body"
-    assert result["action"]["buttons"] == [{"type": "quick_reply", "id": "1", "title": "Button 1"}]
+    assert result["type"] == "button"
+    assert result["text"]["body"] == "Test body"
+    assert result["buttons"] == [{"type": "quick_reply", "id": "1", "title": "Button 1"}]
     
     # Check optional fields are not present
     assert "header" not in result

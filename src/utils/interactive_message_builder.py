@@ -50,20 +50,18 @@ def create_interactive_message(
         "messaging_product": "whatsapp",
         "recipient_type": "individual",
         "to": recipient,
-        "type": "interactive",
-        "body": {"text": body},
-        "action": {
-            "buttons": [
-                {"type": "quick_reply", "id": btn["id"], "title": btn["title"]}
-                for btn in button_list
-            ]
-        }
+        "type": "button",
+        "text": {"body": body},
+        "buttons": [
+            {"type": "quick_reply", "id": btn["id"], "title": btn["title"]}
+            for btn in button_list
+        ]
     }
     
     # Add optional fields if provided
     if header:
-        payload["header"] = {"text": header}
+        payload["header"] = header
     if footer:
-        payload["footer"] = {"text": footer}
+        payload["footer"] = footer
     print("Final payload:", payload)
     return payload

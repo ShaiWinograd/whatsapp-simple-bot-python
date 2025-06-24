@@ -48,7 +48,7 @@ def test_handle_initial_message_with_manager(moving_service, mock_conversation_m
         "1234567890", "awaiting_packing_choice"
     )
     assert len(messages) == 1
-    assert messages[0]['type'] == "interactive"
+    assert messages[0]['type'] == "button"
 
 
 def test_handle_initial_message_without_manager(moving_service_no_manager):
@@ -57,7 +57,7 @@ def test_handle_initial_message_without_manager(moving_service_no_manager):
     
     assert moving_service_no_manager.get_conversation_state() == "awaiting_packing_choice"
     assert len(messages) == 1
-    assert messages[0]['type'] == "interactive"
+    assert messages[0]['type'] == "button"
 
 
 def test_handle_packing_choice_valid(moving_service, mock_conversation_manager):
@@ -192,7 +192,7 @@ def test_reset_state_management(moving_service, mock_conversation_manager):
     
     # Verify welcome message is returned
     assert len(messages) == 1
-    assert messages[0]['type'] == 'interactive'
+    assert messages[0]['type'] == 'button'
 
 
 def test_customer_details_handling(moving_service, mock_conversation_manager):

@@ -80,37 +80,49 @@ class BaseConversationService(ABC):
 
     def _create_interactive_message_from_config(self, config: Dict[str, Any], buttons_key: str = 'buttons') -> Dict[str, Any]:
         """
-        Create an interactive message from configuration dictionary.
+        Create a button message from configuration dictionary.
         
         Args:
             config (Dict[str, Any]): Configuration dictionary containing message details
             buttons_key (str, optional): Key for buttons in config. Defaults to 'buttons'
             
         Returns:
-            Dict[str, Any]: WhatsApp API compatible interactive message payload
+            Dict[str, Any]: WhatsApp API compatible button message payload
         """
         if not config.get('body'):
             raise KeyError("Required 'body' key missing from config")
             
-        return create_interactive_message(
-            recipient=self.recipient,
-            body_text=config['body'],
-            header_text=config.get('header', ''),
-            footer_text=config.get('footer', ''),
-            buttons=config.get(buttons_key, []) if all(isinstance(b, dict) and 'id' in b and 'title' in b for b in config.get(buttons_key, []))
-                   else [{"id": str(i), "title": btn} for i, btn in enumerate(config.get(buttons_key, []))]
-        )
+        buttons = config.get(buttons_key, [])
+        if not all(isinstance(b, dict) and 'id' in b and 'title' in b for b in buttons):
+            buttons = [{"id": str(i), "title": btn} for i, btn in enumerate(buttons)]
+            
+        return {
+            "messaging_product": "whatsapp",
+            "recipient_type": "individual",
+            "to": self.recipient,
+            "type": "button",
+            "text": {"body": config['body']},
+            "header": config.get('header', '') if config.get('header') else None,
+            "footer": config.get('footer', '') if config.get('footer') else None,
+            "buttons": [{"type": "quick_reply", **btn} for btn in buttons]
+        }
 
     def _create_interactive_message_with_options(self, config: Dict[str, Any]) -> Dict[str, Any]:
-        """Helper method to create interactive messages with options structure."""
-        return create_interactive_message(
-            recipient=self.recipient,
-            body_text=config['options']['title'],
-            header_text=config.get('header', ''),
-            footer_text=config.get('footer', ''),
-            buttons=config['options']['buttons'] if all(isinstance(b, dict) and 'id' in b and 'title' in b for b in config['options']['buttons'])
-                   else [{"id": str(i), "title": btn} for i, btn in enumerate(config['options']['buttons'])]
-        )
+        """Helper method to create button messages with options structure."""
+        buttons = config['options']['buttons']
+        if not all(isinstance(b, dict) and 'id' in b and 'title' in b for b in buttons):
+            buttons = [{"id": str(i), "title": btn} for i, btn in enumerate(buttons)]
+            
+        return {
+            "messaging_product": "whatsapp",
+            "recipient_type": "individual",
+            "to": self.recipient,
+            "type": "button",
+            "text": {"body": config['options']['title']},
+            "header": config.get('header', '') if config.get('header') else None,
+            "footer": config.get('footer', '') if config.get('footer') else None,
+            "buttons": [{"type": "quick_reply", **btn} for btn in buttons]
+        }
 
     def _create_verification_message(self) -> Dict[str, Any]:
         """
@@ -169,19 +181,29 @@ class BaseConversationService(ABC):
             
         # Validate selected slot format (basic check)
         if not selected_slot or len(selected_slot) < 5:  # Assuming minimum time slot format
-            return [self.create_text_message(GENERAL['error'])]
+            return [create_interactive_message(
+                recipient=self.recipient,
+                body_text=GENERAL['error'],
+                buttons=[{"id": "retry", "title": "נסו שנית"}]
+            )]
             
         try:
             # Create confirmation message with option to change slot
-            return [self._create_interactive_message_from_config({
-                'body': CALL_SCHEDULING['confirmation']['body_template'].format(slot=selected_slot),
-                'header': CALL_SCHEDULING['confirmation']['header'],
-                'footer': CALL_SCHEDULING['confirmation']['footer'],
-                'buttons': [CALL_SCHEDULING['confirmation']['change_slot_button']]
-            })]
+            # Create confirmation message with option to change slot
+            return [create_interactive_message(
+                recipient=self.recipient,
+                body_text=CALL_SCHEDULING['confirmation']['body_template'].format(slot=selected_slot),
+                header_text=CALL_SCHEDULING['confirmation']['header'],
+                footer_text=CALL_SCHEDULING['confirmation']['footer'],
+                buttons=[CALL_SCHEDULING['confirmation']['change_slot_button']]
+            )]
         except Exception as e:
             print(f"Error creating slot confirmation message: {str(e)}")
-            return [self.create_text_message(GENERAL['error'])]
+            return [create_interactive_message(
+                recipient=self.recipient,
+                body_text=GENERAL['error'],
+                buttons=[{"id": "retry", "title": "נסו שנית"}]
+            )]
 
     def _create_completion_messages(self) -> List[Dict[str, Any]]:
         """
@@ -213,12 +235,13 @@ class BaseConversationService(ABC):
             available_slots.extend(navigation_options)
 
             # Create and validate scheduling message
-            schedule_msg = self._create_interactive_message_from_config({
-                'body': completion_message,
-                'header': self.responses.get('scheduling', {}).get('header', ''),
-                'footer': self.responses.get('scheduling', {}).get('footer', ''),
-                'buttons': available_slots
-            })
+            schedule_msg = create_interactive_message(
+                recipient=self.recipient,
+                body_text=completion_message,
+                header_text=self.responses.get('scheduling', {}).get('header', ''),
+                footer_text=self.responses.get('scheduling', {}).get('footer', ''),
+                buttons=available_slots
+            )
             if not schedule_msg:
                 raise ValueError("Failed to create interactive scheduling message")
 
@@ -231,12 +254,16 @@ class BaseConversationService(ABC):
         except Exception as e:
             print(f"Error creating completion messages: {str(e)}")
             # Create a simpler fallback message without slots
-            return [self._create_interactive_message_from_config({
+            config = {
                 'body': self.responses.get('fallback', {}).get('body', GENERAL['error']),
                 'header': self.responses.get('fallback', {}).get('header', ''),
                 'footer': self.responses.get('fallback', {}).get('footer', ''),
-                'buttons': [
-                    NAVIGATION['back_to_main'],
-                    NAVIGATION['talk_to_representative']
-                ]
-            })]
+                'buttons': [NAVIGATION['back_to_main'], NAVIGATION['talk_to_representative']]
+            }
+            return [create_interactive_message(
+                recipient=self.recipient,
+                body_text=config['body'],
+                header_text=config.get('header', ''),
+                footer_text=config.get('footer', ''),
+                buttons=config['buttons']
+            )]

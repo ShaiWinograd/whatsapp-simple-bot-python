@@ -49,7 +49,7 @@ class MediaMessagePayload(BaseWebhookPayload):
 
 @dataclass
 class InteractiveMessagePayload(BaseWebhookPayload):
-    """Payload for interactive messages with buttons."""
+    """Payload for interactive button messages."""
     body_text: str
     header_text: Optional[str] = None
     footer_text: Optional[str] = None
@@ -58,29 +58,27 @@ class InteractiveMessagePayload(BaseWebhookPayload):
     def to_dict(self) -> Dict[str, Any]:
         """Convert to WhatsApp API format."""
         payload = super().to_dict()
-        payload["type"] = "interactive"
+        payload["type"] = "button"
 
-        # Required body
-        payload["body"] = {"text": self.body_text}
+        # Required text
+        payload["text"] = {"body": self.body_text}
 
         # Optional header
         if self.header_text:
-            payload["header"] = {"text": self.header_text}
+            payload["header"] = self.header_text
 
         # Optional footer
         if self.footer_text:
-            payload["footer"] = {"text": self.footer_text}
+            payload["footer"] = self.footer_text
 
-        # Required action with buttons
-        payload["action"] = {
-            "buttons": [
-                {
-                    "type": "quick_reply",
-                    "id": str(button["id"]),
-                    "title": button["title"]
-                }
-                for button in self.buttons
-            ]
-        }
+        # Required buttons
+        payload["buttons"] = [
+            {
+                "type": "quick_reply",
+                "id": str(button["id"]),
+                "title": button["title"]
+            }
+            for button in self.buttons
+        ]
 
         return payload
