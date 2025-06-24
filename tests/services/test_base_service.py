@@ -80,7 +80,7 @@ def test_create_text_message(base_service):
     assert message['messaging_product'] == "whatsapp"
     assert message['recipient_type'] == "individual"
     assert message['to'] == "1234567890"
-    assert message['body'] == "test message"
+    assert message['body'] == {"text": "test message"}
 
 
 def test_create_interactive_message_from_config(base_service):
@@ -97,7 +97,7 @@ def test_create_interactive_message_from_config(base_service):
     assert message['messaging_product'] == "whatsapp"
     assert message['recipient_type'] == "individual"
     assert message['to'] == "1234567890"
-    assert message['body'] == 'Test body'
+    assert message['body'] == {'text': 'Test body'}
     assert message['header'] == {'type': 'text', 'text': 'Test header'}
     assert message['footer'] == {'text': 'Test footer'}
     assert message['type'] == 'button'
@@ -136,7 +136,7 @@ def test_create_verification_message(base_service):
     
     message = base_service._create_verification_message()
     
-    assert 'Test details' in message['body']
+    assert 'Test details' in message['body']['text']
     assert message['action']['buttons'][0] == {"type": "quick_reply", "id": "0", "title": "Yes"}
     assert message['action']['buttons'][1] == {"type": "quick_reply", "id": "1", "title": "No"}
 
@@ -153,13 +153,13 @@ def test_handle_slot_selection(base_service, mock_conversation_manager):
     message = {"interactive": {"button_reply": {"title": NAVIGATION['back_to_main']}}}
     response = base_service._handle_slot_selection(message)
     assert len(response) == 1
-    assert response[0]['body'] == "initial"
+    assert response[0]['body'] == {"text": "initial"}
     
     # Test invalid slot
     message = {"interactive": {"button_reply": {"title": ""}}}
     response = base_service._handle_slot_selection(message)
     assert len(response) == 1
-    assert response[0]['body'] == GENERAL['error']
+    assert response[0]['body'] == {"text": GENERAL['error']}
 
     # Test valid slot selection
     message = {"interactive": {"button_reply": {"title": "10:00-11:00"}}}
