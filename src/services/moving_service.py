@@ -141,7 +141,7 @@ class MovingService(BaseConversationService):
             return self.handle_initial_message()
         elif button_title == NAVIGATION['talk_to_representative']:
             return []  # Will be handled by parent service
-        elif button_title == 'מעדיפים לוותר על שליחת תמונות':
+        elif button_title == 'מעדיפים לדלג':
             # Proceed to slot selection without photos
             print("DEBUG - User opted to skip photos, creating completion messages")
             return self._create_completion_messages()

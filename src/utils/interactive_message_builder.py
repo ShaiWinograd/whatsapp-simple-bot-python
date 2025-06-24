@@ -29,7 +29,7 @@ def create_interactive_message(
     # Combine intro and welcome message if using defaults
     body = body_text or f"{GENERAL['intro']}\n\n{GENERAL['welcome_message']}"
     header = header_text or GENERAL['header']
-    footer = footer_text or GENERAL['footer']
+    footer = footer_text if footer_text is not None else ''
     button_list = buttons or [
         {"id": str(i), "title": title}
         for i, title in enumerate(GENERAL['options'])
