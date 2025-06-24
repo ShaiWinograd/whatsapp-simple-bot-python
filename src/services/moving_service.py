@@ -48,7 +48,12 @@ class MovingService(BaseConversationService):
             
         except Exception as e:
             print(f"Error creating initial moving service message: {str(e)}")
-            return [self.create_text_message(GENERAL['error'])]
+            # Return error message directly using TextMessagePayload to avoid recursion
+            payload = TextMessagePayload(
+                to=self.recipient,
+                body=GENERAL['error']
+            ).to_dict()
+            return [payload]
 
     def _reset_to_main_menu(self) -> List[Dict[str, Any]]:
         """Reset service state and return to main menu."""

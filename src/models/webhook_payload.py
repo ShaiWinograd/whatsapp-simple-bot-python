@@ -36,7 +36,8 @@ class TextMessagePayload(BaseWebhookPayload):
     def to_dict(self) -> Dict[str, Any]:
         payload = super().to_dict()
         payload.update({
-            "body": {"text": self.body}
+            "type": "text",
+            "body": self.body
         })
         return payload
 

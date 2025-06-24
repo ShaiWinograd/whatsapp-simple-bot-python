@@ -81,7 +81,8 @@ def test_handle_customer_details_invalid(organization_service):
     # Test too short message
     messages = organization_service._handle_customer_details({"text": {"body": "short"}})
     assert len(messages) == 2
-    assert "לא מספיקים" in messages[0]['body']['text']
+    assert "לא מספיקים" in messages[0]['body']
+    assert messages[0]['type'] == 'text'
 
 
 def test_handle_customer_details_valid_with_manager(organization_service, mock_conversation_manager):
@@ -174,4 +175,5 @@ def test_handle_response_error(organization_service):
     messages = organization_service.handle_response({})
     
     assert len(messages) == 1
-    assert messages[0]['body'] == {'text': GENERAL['error']}
+    assert messages[0]['type'] == 'text'
+    assert messages[0]['body'] == GENERAL['error']

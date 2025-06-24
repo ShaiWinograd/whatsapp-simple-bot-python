@@ -22,7 +22,14 @@ def test_text_message_payload():
     payload = TextMessagePayload(to="1234567890", body="Test message")
     result = payload.to_dict()
     
-    assert result["body"] == {"text": "Test message"}
+    # Text messages have direct string body
+    assert result["type"] == "text"
+    assert result["body"] == "Test message"
+
+    # Verify other required fields
+    assert result["messaging_product"] == "whatsapp"
+    assert result["recipient_type"] == "individual"
+    assert result["to"] == "1234567890"
 
 def test_interactive_message_payload():
     """Test interactive message payload creation with all fields."""

@@ -80,7 +80,8 @@ def test_create_text_message(base_service):
     assert message['messaging_product'] == "whatsapp"
     assert message['recipient_type'] == "individual"
     assert message['to'] == "1234567890"
-    assert message['body'] == {"text": "test message"}
+    assert message['type'] == "text"
+    assert message['body'] == "test message"
 
 
 def test_create_interactive_message_from_config(base_service):
