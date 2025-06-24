@@ -11,7 +11,8 @@ from ...config.responses.common import GENERAL
 SERVICE_TYPE_MAPPING = {
     'מעבר דירה 🏠': ServiceType.MOVING,
     'סידור וארגון ✨': ServiceType.ORGANIZATION,
-    'אשמח לדבר עם נציג/ה 👩‍💼': ServiceType.HUMAN_SUPPORT
+    'אשמח לדבר עם נציג/ה 👩‍💼': ServiceType.HUMAN_SUPPORT,
+    'אחר ❓': ServiceType.HUMAN_SUPPORT
 }
 
 

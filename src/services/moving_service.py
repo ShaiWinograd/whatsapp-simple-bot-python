@@ -2,7 +2,7 @@
 from typing import List, Dict, Any
 from .base_service import BaseConversationService
 from ..config.responses import SERVICE_RESPONSES, GENERAL
-from ..config.responses.common import NAVIGATION
+from ..config.responses.common import NAVIGATION, CALL_SCHEDULING
 from ..config.whatsapp import LABELS
 from ..utils.interactive_message_utils import get_button_title
 from ..utils.interactive_message_builder import create_interactive_message
@@ -172,13 +172,24 @@ class MovingService(BaseConversationService):
         selected_slot = get_button_title(message)
         
         # Handle navigation options
-        if selected_slot in [NAVIGATION['back_to_main'], NAVIGATION['talk_to_representative']]:
+        if selected_slot == NAVIGATION['back_to_main']:
             return [self.create_text_message(GENERAL['error'])]
+        elif selected_slot == NAVIGATION['talk_to_representative']:
+            # This will be handled by the parent service and ConversationManager
+            return []
+        elif selected_slot == 'שינוי מועד השיחה':
+            # Regenerate completion messages with new slots
+            return self._create_completion_messages()
             
-        # Set state to completed and send confirmation
-        self.set_conversation_state("completed")
-        confirmation_msg = f"מעולה! נציג שלנו יתקשר אליך ב{selected_slot} כדי לתת הצעת מחיר מדויקת."
-        return [self.create_text_message(confirmation_msg)]
+        # Create confirmation message with option to change slot
+        confirmation_msg = create_interactive_message(
+            recipient=self.recipient,
+            body_text=CALL_SCHEDULING['confirmation']['body_template'].format(slot=selected_slot),
+            header_text=CALL_SCHEDULING['confirmation']['header'],
+            footer_text=CALL_SCHEDULING['confirmation']['footer'],
+            buttons=[{"id": "0", "title": CALL_SCHEDULING['confirmation']['change_slot_button']}]
+        )
+        return [confirmation_msg]
 
     def handle_response(self, message: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Handle user response based on current conversation state."""
@@ -204,11 +215,6 @@ class MovingService(BaseConversationService):
         messages = []
         
         try:
-            # Update labels silently
-            print("DEBUG - Updating labels")
-            WhatsAppClient.remove_label(self.recipient, LABELS['bot_new_conversation'])
-            WhatsAppClient.apply_label(self.recipient, LABELS['waiting_call_before_quote'])
-            
             # Create final message explaining the phone call requirement
             print("DEBUG - Getting completion message from responses")
             print(f"DEBUG - Available response keys: {list(self.responses.keys())}")

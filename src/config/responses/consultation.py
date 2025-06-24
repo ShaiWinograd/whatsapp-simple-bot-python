@@ -2,9 +2,9 @@
 from .common import NAVIGATION, SCHEDULING
 
 INITIAL = {
-    'header': 'ייעוץ אישי 💫',
+    'header': 'ייעוץ אישי',
     'welcome': 'אשמח לקיים איתך שיחת ייעוץ! על מה היית רוצה לדבר?',
-    'footer': 'כאן בשבילך לכל שאלה ובקשה! 🌟',
+    'footer': 'כאן בשבילך לכל שאלה ובקשה!',
     'options': {
         'title': 'בחר/י נושא:',
         'buttons': [
@@ -36,9 +36,9 @@ CONSULTATION_TYPE = {
 }
 
 COMPLETION = {
-    'header': 'תודה על פנייתך! 💫',
+    'header': 'תודה על פנייתך!',
     'final': 'מעולה! אשמח לקבוע איתך את שיחת הייעוץ. פגישת ייעוץ ראשונית היא ללא עלות ונמשכת כ-45 דקות.',
-    'footer': 'בדרך לפתרונות מותאמים אישית! ⭐',
+    'footer': 'בדרך לפתרונות מותאמים אישית!',
     'schedule': {
         **SCHEDULING,
         'buttons': [
