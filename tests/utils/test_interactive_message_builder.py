@@ -18,7 +18,7 @@ def test_create_interactive_message_default():
     assert result["body"] == expected_body
     
     # Check header and type
-    assert result["header"] == GENERAL['header']
+    assert result["header"] == {"type": "text", "text": GENERAL['header']}
     assert result["type"] == "button"
     
     # Check buttons
@@ -55,8 +55,8 @@ def test_create_interactive_message_custom():
     
     # Check message components
     assert result["body"] == body_text
-    assert result["header"] == header_text
-    assert result["footer"] == footer_text
+    assert result["header"] == {"type": "text", "text": header_text}
+    assert result["footer"] == {"text": footer_text}
     assert result["type"] == "button"
     
     # Check buttons

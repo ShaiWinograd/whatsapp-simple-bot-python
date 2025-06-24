@@ -1,6 +1,10 @@
 """Utility for building interactive messages."""
-from typing import Dict, Any, List, Optional
-from ..models.webhook_payload import InteractiveMessagePayload
+from typing import Dict, Any, List, Optional, Union
+from ..models.webhook_payload import (
+    InteractiveMessagePayload,
+    MessageHeader,
+    MessageFooter
+)
 from ..config.responses.common import GENERAL
 
 def create_interactive_message(
@@ -45,11 +49,17 @@ def create_interactive_message(
     print("Using buttons:", button_list)
 
     # Create payload using InteractiveMessagePayload
+    # Create header object if header text is provided
+    header_obj = MessageHeader(type="text", text=header) if header else None
+    
+    # Create footer object if footer text is provided
+    footer_obj = MessageFooter(text=footer) if footer else None
+    
     interactive_payload = InteractiveMessagePayload(
         to=recipient,
         body_text=body,
-        header_text=header,
-        footer_text=footer,
+        header=header_obj,
+        footer=footer_obj,
         buttons=button_list,
         type="button"  # Default type for interactive messages
     )

@@ -98,8 +98,8 @@ def test_create_interactive_message_from_config(base_service):
     assert message['recipient_type'] == "individual"
     assert message['to'] == "1234567890"
     assert message['body'] == 'Test body'
-    assert message['header'] == 'Test header'
-    assert message['footer'] == 'Test footer'
+    assert message['header'] == {'type': 'text', 'text': 'Test header'}
+    assert message['footer'] == {'text': 'Test footer'}
     assert message['type'] == 'button'
     
     buttons = message['action']['buttons']
@@ -129,8 +129,8 @@ def test_create_verification_message(base_service):
             }
         },
         'verify': {
-            'header': 'Verify',
-            'footer': 'Please confirm'
+            'header': {'type': 'text', 'text': 'Verify'},
+            'footer': {'text': 'Please confirm'}
         }
     }
     

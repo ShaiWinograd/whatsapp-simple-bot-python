@@ -1,5 +1,19 @@
 from dataclasses import dataclass, field
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any, List, Union
+
+@dataclass
+class MessageHeader:
+    """Header for interactive messages."""
+    type: str
+    text: Optional[str] = None  # For text headers
+    image: Optional[Dict[str, str]] = None  # For image headers with URL
+    document: Optional[Dict[str, str]] = None  # For document headers with URL
+    video: Optional[Dict[str, str]] = None  # For video headers with URL
+
+@dataclass
+class MessageFooter:
+    """Footer for interactive messages."""
+    text: str
 
 @dataclass
 class BaseWebhookPayload:
@@ -48,8 +62,8 @@ class MediaMessagePayload(BaseWebhookPayload):
 class InteractiveMessagePayload(BaseWebhookPayload):
     """Payload for interactive button messages."""
     body_text: str
-    header_text: Optional[str] = None
-    footer_text: Optional[str] = None
+    header: Optional[MessageHeader] = None
+    footer: Optional[MessageFooter] = None
     buttons: List[Dict[str, str]] = field(default_factory=list)  # List of {id, title} dicts
     type: str = field(default="button")
 
@@ -61,12 +75,20 @@ class InteractiveMessagePayload(BaseWebhookPayload):
         payload["body"] = self.body_text
 
         # Optional header
-        if self.header_text:
-            payload["header"] = self.header_text
+        if self.header:
+            payload["header"] = {
+                "type": self.header.type,
+                **({k: v for k, v in {
+                    "text": self.header.text,
+                    "image": self.header.image,
+                    "document": self.header.document,
+                    "video": self.header.video
+                }.items() if v is not None})
+            }
 
         # Optional footer
-        if self.footer_text:
-            payload["footer"] = self.footer_text
+        if self.footer:
+            payload["footer"] = {"text": self.footer.text}
 
         # Add type field
         payload["type"] = self.type

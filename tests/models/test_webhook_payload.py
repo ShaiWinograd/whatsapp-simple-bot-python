@@ -3,7 +3,9 @@ import pytest
 from src.models.webhook_payload import (
     BaseWebhookPayload,
     TextMessagePayload,
-    InteractiveMessagePayload
+    InteractiveMessagePayload,
+    MessageHeader,
+    MessageFooter
 )
 
 def test_base_webhook_payload():
@@ -29,11 +31,14 @@ def test_interactive_message_payload():
         {"id": "2", "title": "Button 2"}
     ]
     
+    header = MessageHeader(type="text", text="Test header")
+    footer = MessageFooter(text="Test footer")
+    
     payload = InteractiveMessagePayload(
         to="1234567890",
         body_text="Test body",
-        header_text="Test header",
-        footer_text="Test footer",
+        header=header,
+        footer=footer,
         buttons=buttons
     )
     
@@ -46,8 +51,8 @@ def test_interactive_message_payload():
     
     # Check message components
     assert result["body"] == "Test body"
-    assert result["header"] == "Test header"
-    assert result["footer"] == "Test footer"
+    assert result["header"] == {"type": "text", "text": "Test header"}
+    assert result["footer"] == {"text": "Test footer"}
     assert result["type"] == "button"
     
     # Check buttons
