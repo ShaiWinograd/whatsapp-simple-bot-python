@@ -205,7 +205,7 @@ class MovingService(BaseConversationService):
         
         # Handle time slot selection
         available_slots = self.responses['time_slots']['buttons']
-        if any(button_title == slot['title'] for slot in available_slots):
+        if button_title in available_slots:
             self.selected_time_slot = button_title
             # Remove new conversation label and apply waiting for call label
             self._remove_label('new_conversation')
@@ -251,7 +251,16 @@ class MovingService(BaseConversationService):
                 # Could add media validation here if needed
                 media_id = message.get(message_type, {}).get('id')
                 if not media_id:
-                    raise ValueError(f"Invalid {message_type} message: missing media ID")
+                    print(f"Error handling photos: Invalid {message_type} message: missing media ID")
+                    # Return both error message and photo options when media ID is missing
+                    return [
+                        self.create_text_message(GENERAL['error']),
+                        self._create_interactive_message_with_options({
+                            'header': self.responses['photos'].get('header', ''),
+                            'footer': self.responses['photos'].get('footer', ''),
+                            'options': self.responses['photo_requirement']['options']
+                        })
+                    ]
                 self.set_conversation_state("awaiting_slot_selection")
                 return [self._create_time_slot_message()]
                 

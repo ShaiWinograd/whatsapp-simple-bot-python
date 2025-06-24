@@ -238,22 +238,29 @@ def test_handle_photos(moving_service):
     assert len(messages) == 2  # Reminder message and options
 
 
-def test_handle_slot_selection_complete(moving_service, mocker):
+@pytest.mark.asyncio
+async def test_handle_slot_selection_complete(moving_service, mocker):
     """Test complete flow of slot selection including navigation."""
     moving_service.set_conversation_state("awaiting_slot_selection")
     mock_remove_label = mocker.patch.object(moving_service, '_remove_label')
     mock_apply_label = mocker.patch.object(moving_service, '_apply_service_label')
-    
+
     # Test back to main menu
-    messages = moving_service._handle_slot_selection({
+    messages = await moving_service._handle_slot_selection({
         "interactive": {"button_reply": {"title": NAVIGATION['back_to_main']}}
     })
     assert len(messages) == 1
     assert moving_service.get_conversation_state() == "awaiting_packing_choice"
+    # Verify 'moving' label is applied when returning to main menu
+    mock_apply_label.assert_called_once_with('moving')
+    
+    # Reset mocks for slot selection test
+    mock_remove_label.reset_mock()
+    mock_apply_label.reset_mock()
     
     # Test valid slot selection
     slot = "היום בין 12:00-14:00"
-    messages = moving_service._handle_slot_selection({
+    messages = await moving_service._handle_slot_selection({
         "interactive": {"button_reply": {"title": slot}}
     })
     assert len(messages) == 1

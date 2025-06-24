@@ -9,6 +9,8 @@ class BaseWebhookPayload:
     def to_dict(self) -> Dict[str, Any]:
         """Convert payload to dictionary format."""
         return {
+            "messaging_product": "whatsapp",
+            "recipient_type": "individual",
             "to": self.to,
         }
 
@@ -19,7 +21,12 @@ class TextMessagePayload(BaseWebhookPayload):
 
     def to_dict(self) -> Dict[str, Any]:
         payload = super().to_dict()
-        payload["body"] = self.body
+        payload.update({
+            "type": "text",
+            "text": {
+                "body": self.body
+            }
+        })
         return payload
 
 @dataclass
@@ -52,23 +59,24 @@ class InteractiveMessagePayload(BaseWebhookPayload):
         """Convert to WhatsApp API format."""
         payload = super().to_dict()
         
-        payload.update({
-            "type": "button",  # Root level type must be: list, button, or product
+        # Create the interactive object structure
+        interactive = {
+            "type": "button",
             "body": {
                 "text": self.body_text
             }
-        })
+        }
 
         # Add optional header
         if self.header_text:
-            payload["header"] = {
+            interactive["header"] = {
                 "type": "text",
                 "text": self.header_text
             }
 
         # Add optional footer
         if self.footer_text:
-            payload["footer"] = {
+            interactive["footer"] = {
                 "text": self.footer_text
             }
 
@@ -84,9 +92,15 @@ class InteractiveMessagePayload(BaseWebhookPayload):
                 for button in self.buttons
             ]
             print("Final button structure:", buttons)
-            payload["action"] = {
+            interactive["action"] = {
                 "buttons": buttons
             }
-            print("Final payload structure:", payload)
+
+        # Add the interactive object to the payload
+        payload.update({
+            "type": "interactive",
+            "interactive": interactive
+        })
+        print("Final payload structure:", payload)
 
         return payload

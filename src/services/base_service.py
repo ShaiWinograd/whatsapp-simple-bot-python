@@ -194,6 +194,19 @@ class BaseConversationService(ABC):
             WhatsAppClient.apply_label(self.recipient, LABELS[label_key])
             self.current_label = label_key
 
+    def _remove_label(self, label_key: str) -> None:
+        """
+        Remove a service-specific label.
+        
+        Args:
+            label_key (str): Key for the label in LABELS config
+        """
+        from ..config.whatsapp import LABELS
+        if label_key in LABELS:
+            WhatsAppClient.remove_label(self.recipient, LABELS[label_key])
+            if self.current_label == label_key:
+                self.current_label = None
+
     def _create_completion_messages(self) -> List[Dict[str, Any]]:
         """
         Create completion messages with available time slots.
