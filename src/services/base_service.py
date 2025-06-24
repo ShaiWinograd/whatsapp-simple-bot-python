@@ -23,6 +23,7 @@ class BaseConversationService(ABC):
         self.conversation_state = "initial"
         self.customer_details: str | None = None
         self.responses: Dict[str, Any] = {}
+        self.current_label = None
     
     @abstractmethod
     def get_service_name(self) -> str:
@@ -179,6 +180,20 @@ class BaseConversationService(ABC):
             print(f"Error creating slot confirmation message: {str(e)}")
             return [self.create_text_message(GENERAL['error'])]
 
+    def _apply_service_label(self, label_key: str) -> None:
+        """
+        Apply a service-specific label and remove previous one if exists.
+        
+        Args:
+            label_key (str): Key for the label in LABELS config
+        """
+        from ..config.whatsapp import LABELS
+        if self.current_label and self.current_label in LABELS:
+            WhatsAppClient.remove_label(self.recipient, LABELS[self.current_label])
+        if label_key in LABELS:
+            WhatsAppClient.apply_label(self.recipient, LABELS[label_key])
+            self.current_label = label_key
+
     def _create_completion_messages(self) -> List[Dict[str, Any]]:
         """
         Create completion messages with available time slots.
@@ -186,6 +201,8 @@ class BaseConversationService(ABC):
         Returns:
             List[Dict[str, Any]]: List of completion messages
         """
+        # Apply waiting for call label
+        self._apply_service_label('waiting_call_before_quote')
         messages = []
         
         try:

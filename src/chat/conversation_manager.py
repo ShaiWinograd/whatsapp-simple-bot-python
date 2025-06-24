@@ -18,6 +18,12 @@ class ConversationManager:
             user_id (str): Unique identifier for the user
             service (BaseConversationService): The conversation service instance
         """
+        # Remove existing labels if there's a previous conversation
+        if user_id in self.conversations:
+            old_service = self.conversations[user_id]
+            if hasattr(old_service, 'current_label') and old_service.current_label:
+                WhatsAppClient.remove_label(user_id, LABELS[old_service.current_label])
+                
         self.conversations[user_id] = service
         self.last_activity[user_id] = datetime.now()
         # Add new conversation label
@@ -63,6 +69,11 @@ class ConversationManager:
             if (current_time - last_active) > timedelta(minutes=self.timeout_minutes)
         ]
         for user_id in stale_users:
+            # Clean up any service-specific labels
+            if user_id in self.conversations:
+                service = self.conversations[user_id]
+                if hasattr(service, 'current_label') and service.current_label:
+                    WhatsAppClient.remove_label(user_id, LABELS[service.current_label])
             self.conversations.pop(user_id, None)
             self.last_activity.pop(user_id, None)
             
@@ -72,6 +83,11 @@ class ConversationManager:
         Args:
             user_id (str): Unique identifier for the user
         """
+        # Clean up any service-specific labels
+        if user_id in self.conversations:
+            service = self.conversations[user_id]
+            if hasattr(service, 'current_label') and service.current_label:
+                WhatsAppClient.remove_label(user_id, LABELS[service.current_label])
         self.conversations.pop(user_id, None)
         self.last_activity.pop(user_id, None)
         # Remove conversation label
@@ -83,5 +99,11 @@ class ConversationManager:
         Args:
             user_id (str): Unique identifier for the user
         """
+        # Clean up any service-specific labels
+        if user_id in self.conversations:
+            service = self.conversations[user_id]
+            if hasattr(service, 'current_label') and service.current_label:
+                WhatsAppClient.remove_label(user_id, LABELS[service.current_label])
+                
         WhatsAppClient.remove_label(user_id, LABELS['bot_new_conversation'])
         WhatsAppClient.apply_label(user_id, LABELS['waiting_human_support'])

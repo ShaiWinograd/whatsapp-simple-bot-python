@@ -29,6 +29,8 @@ class MovingService(BaseConversationService):
         try:
             self.set_conversation_state("awaiting_packing_choice")
             print("\nCreating initial moving service message...")
+            # Apply moving service label
+            self._apply_service_label('moving')
             
             if 'initial' not in self.responses:
                 raise KeyError("Missing 'initial' configuration in responses")

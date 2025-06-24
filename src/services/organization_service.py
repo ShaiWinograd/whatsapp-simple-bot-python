@@ -27,6 +27,8 @@ class OrganizationService(BaseConversationService):
         """Handle initial organization service conversation."""
         self.set_conversation_state("awaiting_customer_details")
         print("\nCreating details collection message...")
+        # Apply organization service label
+        self._apply_service_label('organization')
         return [self._create_details_message()]
 
     def _create_details_message(self) -> Dict[str, Any]:
