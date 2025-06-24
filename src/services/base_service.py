@@ -96,16 +96,13 @@ class BaseConversationService(ABC):
         if not all(isinstance(b, dict) and 'id' in b and 'title' in b for b in buttons):
             buttons = [{"id": str(i), "title": btn} for i, btn in enumerate(buttons)]
             
-        return {
-            "messaging_product": "whatsapp",
-            "recipient_type": "individual",
-            "to": self.recipient,
-            "type": "button",
-            "text": {"body": config['body']},
-            "header": config.get('header', '') if config.get('header') else None,
-            "footer": config.get('footer', '') if config.get('footer') else None,
-            "buttons": [{"type": "quick_reply", **btn} for btn in buttons]
-        }
+        return create_interactive_message(
+            recipient=self.recipient,
+            body_text=config['body'],
+            header_text=config.get('header', '') if config.get('header') else None,
+            footer_text=config.get('footer', '') if config.get('footer') else None,
+            buttons=buttons
+        )
 
     def _create_interactive_message_with_options(self, config: Dict[str, Any]) -> Dict[str, Any]:
         """Helper method to create button messages with options structure."""
@@ -113,16 +110,13 @@ class BaseConversationService(ABC):
         if not all(isinstance(b, dict) and 'id' in b and 'title' in b for b in buttons):
             buttons = [{"id": str(i), "title": btn} for i, btn in enumerate(buttons)]
             
-        return {
-            "messaging_product": "whatsapp",
-            "recipient_type": "individual",
-            "to": self.recipient,
-            "type": "button",
-            "text": {"body": config['options']['title']},
-            "header": config.get('header', '') if config.get('header') else None,
-            "footer": config.get('footer', '') if config.get('footer') else None,
-            "buttons": [{"type": "quick_reply", **btn} for btn in buttons]
-        }
+        return create_interactive_message(
+            recipient=self.recipient,
+            body_text=config['options']['title'],
+            header_text=config.get('header', '') if config.get('header') else None,
+            footer_text=config.get('footer', '') if config.get('footer') else None,
+            buttons=buttons
+        )
 
     def _create_verification_message(self) -> Dict[str, Any]:
         """

@@ -32,10 +32,11 @@ def test_handle_non_interactive_message_new_conversation(handler):
     # Should return welcome message
     assert len(result) == 1
     welcome_payload = result[0]
-    assert welcome_payload["type"] == "button"
     assert welcome_payload["to"] == "1234567890"
     assert "text" in welcome_payload
-    assert "buttons" in welcome_payload
+    assert "action" in welcome_payload
+    assert welcome_payload["action"]["type"] == "button"
+    assert "buttons" in welcome_payload["action"]
 
 def test_handle_button_click_main_menu(handler, service_factory):
     """Test handling button click for main menu option."""
@@ -93,10 +94,11 @@ def test_handle_back_to_main_menu(handler):
     # Verify welcome message was returned
     assert len(result) == 1
     welcome_payload = result[0]
-    assert welcome_payload["type"] == "button"
     assert welcome_payload["to"] == "1234567890"
     assert "text" in welcome_payload
-    assert "buttons" in welcome_payload
+    assert "action" in welcome_payload
+    assert welcome_payload["action"]["type"] == "button"
+    assert "buttons" in welcome_payload["action"]
 
 def test_handle_human_support_request(handler, service_factory):
     """Test handling request for human support."""
@@ -154,7 +156,8 @@ def test_handle_service_creation_error(handler, service_factory):
     # Should return to welcome message on error
     assert len(result) == 1
     welcome_payload = result[0]
-    assert welcome_payload["type"] == "button"
     assert welcome_payload["to"] == "1234567890"
     assert "text" in welcome_payload
-    assert "buttons" in welcome_payload
+    assert "action" in welcome_payload
+    assert welcome_payload["action"]["type"] == "button"
+    assert "buttons" in welcome_payload["action"]

@@ -12,17 +12,17 @@ def test_create_interactive_message_default():
     assert result["messaging_product"] == "whatsapp"
     assert result["recipient_type"] == "individual"
     assert result["to"] == recipient
-    assert result["type"] == "button"
     
     # Check body contains default welcome message
     expected_body = f"{GENERAL['intro']}\n\n{GENERAL['welcome_message']}"
     assert result["text"]["body"] == expected_body
     
     # Check header is default
-    assert result["header"] == GENERAL['header']
+    assert result["header"]["text"] == GENERAL['header']
     
-    # Check buttons match default options
-    buttons = result["buttons"]
+    # Check action and buttons
+    assert result["action"]["type"] == "button"
+    buttons = result["action"]["buttons"]
     assert len(buttons) == len(GENERAL['options'])
     for i, button in enumerate(buttons):
         assert button["type"] == "quick_reply"
@@ -52,15 +52,15 @@ def test_create_interactive_message_custom():
     assert result["messaging_product"] == "whatsapp"
     assert result["recipient_type"] == "individual"
     assert result["to"] == recipient
-    assert result["type"] == "button"
     
     # Check message components
     assert result["text"]["body"] == body_text
-    assert result["header"] == header_text
-    assert result["footer"] == footer_text
+    assert result["header"]["text"] == header_text
+    assert result["footer"]["text"] == footer_text
     
-    # Check buttons
-    result_buttons = result["buttons"]
+    # Check action and buttons
+    assert result["action"]["type"] == "button"
+    result_buttons = result["action"]["buttons"]
     assert len(result_buttons) == len(buttons)
     for i, button in enumerate(result_buttons):
         assert button["type"] == "quick_reply"
@@ -83,9 +83,9 @@ def test_create_interactive_message_minimal():
     assert result["messaging_product"] == "whatsapp"
     assert result["recipient_type"] == "individual"
     assert result["to"] == recipient
-    assert result["type"] == "button"
     assert result["text"]["body"] == body_text
-    assert result["buttons"] == [{"type": "quick_reply", "id": "1", "title": "Button 1"}]
+    assert result["action"]["type"] == "button"
+    assert result["action"]["buttons"] == [{"type": "quick_reply", "id": "1", "title": "Button 1"}]
     
     # Check optional fields are not present
     assert "header" not in result
