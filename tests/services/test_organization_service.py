@@ -56,8 +56,8 @@ def test_handle_initial_message_with_manager(organization_service, mock_conversa
         "1234567890", "awaiting_customer_details"
     )
     assert len(messages) == 1
-    assert 'interactive' in messages[0]
-    assert 'body' in messages[0]['interactive']
+    assert messages[0]['type'] == 'interactive'
+    assert 'body' in messages[0]
 
 
 def test_handle_initial_message_without_manager(organization_service_no_manager):
@@ -66,8 +66,8 @@ def test_handle_initial_message_without_manager(organization_service_no_manager)
     
     assert organization_service_no_manager.get_conversation_state() == "awaiting_customer_details"
     assert len(messages) == 1
-    assert 'interactive' in messages[0]
-    assert 'body' in messages[0]['interactive']
+    assert messages[0]['type'] == 'interactive'
+    assert 'body' in messages[0]
 
 
 def test_handle_customer_details_invalid(organization_service):
