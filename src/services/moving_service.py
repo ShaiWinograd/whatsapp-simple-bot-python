@@ -130,6 +130,7 @@ class MovingService(BaseConversationService):
                 self.conversation_manager.update_service_state(self.recipient, "awaiting_emergency_support")
             else:
                 self.set_conversation_state("awaiting_emergency_support")
+            # Create text message with proper type field to avoid handler recursion
             return [self.create_text_message(URGENT_SUPPORT_MESSAGE)]
         elif selected_option == 'לא':
             if self.conversation_manager:

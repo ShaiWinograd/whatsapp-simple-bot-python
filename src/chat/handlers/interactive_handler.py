@@ -1,11 +1,9 @@
 """Interactive message handler implementation."""
 from typing import Dict, Any, List
-from .message_handler_base import MessageHandlerBase
+from .base_handler import BaseMessageHandler
 from ...services.service_factory import ServiceType
 from ...utils.errors import ConversationError
 from ...utils.interactive_message_utils import get_button_title
-from ...utils.interactive_message_builder import create_interactive_message
-from ...config.responses.common import GENERAL
 
 # Mapping between Hebrew button titles and ServiceType enum values
 SERVICE_TYPE_MAPPING = {
@@ -16,7 +14,7 @@ SERVICE_TYPE_MAPPING = {
 }
 
 
-class InteractiveMessageHandler(MessageHandlerBase):
+class InteractiveMessageHandler(BaseMessageHandler):
     """Handler for interactive messages and button replies."""
 
     def handle(self, message: Dict[str, Any], base_payload: Dict[str, Any]) -> List[Dict[str, Any]]:
@@ -95,4 +93,4 @@ class InteractiveMessageHandler(MessageHandlerBase):
 
     def create_welcome_payload(self, recipient: str) -> Dict[str, Any]:
         """Create a welcome message payload with default buttons."""
-        return create_interactive_message(recipient)
+        return self.create_interactive_message(recipient)

@@ -1,8 +1,6 @@
 """Text message handler implementation."""
 from typing import Dict, Any, List
 from .base_handler import BaseMessageHandler
-
-
 class TextMessageHandler(BaseMessageHandler):
     """Handler for text messages."""
 
@@ -18,11 +16,16 @@ class TextMessageHandler(BaseMessageHandler):
             List[Dict[str, Any]]: List of message payloads to send
         """
         recipient = base_payload["to"]
+        
+        try:
+            # Check for existing conversation first
+            conversation_response = self.check_existing_conversation(recipient, message)
+            if conversation_response is not None:
+                return conversation_response
 
-        # Check for existing conversation first
-        conversation_response = self.check_existing_conversation(recipient, message)
-        if conversation_response is not None:
-            return conversation_response
-
-        # For any other text message, show the welcome message
-        return self.create_welcome_messages(recipient)
+            # For any other text message, show the welcome message
+            return self.create_welcome_messages(recipient)
+            
+        except Exception as e:
+            print(f"Error handling text message: {str(e)}")
+            return [self.create_text_message(recipient, "Sorry, there was an error processing your message. Please try again.")]
