@@ -10,6 +10,7 @@ load_dotenv()  # Load environment variables from a .env file
 # Initialize the message handler with its dependencies
 conversation_manager = ConversationManager()
 message_handler = MessageHandler(conversation_manager, BusinessFlowFactory())
+whatsapp_client = WhatsAppClient()
 
 app = Flask(__name__)
 
@@ -34,8 +35,12 @@ def _send_message_responses(payloads):
     Args:
         payloads (list): List of payloads to send.
     """
+    if not payloads:
+        return
+        
     for payload in payloads:
-        WhatsAppClient.send_message(payload)
+        if payload:  # Only send if payload is not None/empty
+            whatsapp_client.send_message(payload)
 
 def _handle_error(e, request_data):
     """Handle and format error responses.
