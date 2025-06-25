@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify
 import os
 from dotenv import load_dotenv
 from src.chat import MessageHandler, ConversationManager
-from src.utils.whatsapp_client import WhatsAppClient
+from src.whatsapp.client import WhatsAppClient
 from src.business.flow_factory import BusinessFlowFactory
 
 load_dotenv()  # Load environment variables from a .env file

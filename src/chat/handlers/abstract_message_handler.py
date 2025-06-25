@@ -1,11 +1,11 @@
 """Abstract message handler with common functionality."""
 from abc import ABC, abstractmethod
 from typing import Dict, Any, List, Optional
+
 from ...business.flow_factory import BusinessFlowFactory
 from ...business.flows.abstract_business_flow import AbstractBusinessFlow
 from ..conversation_manager import ConversationManager
-from ...utils.text_message_builder import create_text_message as create_text_payload
-from ...utils.interactive_message_builder import InteractiveMessageBuilder
+from ...whatsapp.utils.messages import MessageBuilder
 
 
 class AbstractMessageHandler(ABC):
@@ -68,9 +68,9 @@ class AbstractMessageHandler(ABC):
         """
         # If message contains button definitions, create interactive message
         if "buttons" in message:
-            return InteractiveMessageBuilder.create_message(recipient=recipient, **message)
+            return MessageBuilder.create_message(recipient=recipient, **message)
         # Otherwise create text message
-        return create_text_payload(recipient=recipient, body_text=message)
+        return MessageBuilder.create_text_message(recipient=recipient, body_text=message)
 
     def create_interactive_message(
         self,
@@ -92,7 +92,7 @@ class AbstractMessageHandler(ABC):
         Returns:
             Dict[str, Any]: Interactive message payload
         """
-        return InteractiveMessageBuilder.create_message(
+        return MessageBuilder.create_message(
             recipient=recipient,
             body_text=body_text,
             header_text=header_text,
@@ -110,7 +110,7 @@ class AbstractMessageHandler(ABC):
         Returns:
             Dict[str, Any]: Message payload
         """
-        return create_text_payload(recipient=recipient, body_text=body)
+        return MessageBuilder.create_text_message(recipient=recipient, body_text=body)
 
     def create_welcome_messages(self, recipient: str) -> List[Dict[str, Any]]:
         """Create welcome and options messages

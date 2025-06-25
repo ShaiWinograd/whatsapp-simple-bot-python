@@ -1,6 +1,9 @@
 """WhatsApp API client for sending messages and managing labels."""
 import requests
-from src.config.whatsapp import API as WHATSAPP_API, LABELS as WHATSAPP_LABELS, get_api_url
+from ..utils.logger import setup_logger
+from ..config.whatsapp import API as WHATSAPP_API, LABELS as WHATSAPP_LABELS, get_api_url
+
+logger = setup_logger(__name__)
 
 class WhatsAppClient:
     """Client for interacting with WhatsApp API."""
@@ -39,7 +42,7 @@ class WhatsAppClient:
                     'requested_url': api_url,
                     'payload': payload
                 }
-                print("API Error:", error_msg)
+                logger.error("API Error: %s", error_msg)
                 return error_msg
                 
             return response.json()
@@ -50,7 +53,7 @@ class WhatsAppClient:
                 'requested_url': api_url,
                 'payload': payload
             }
-            print("Request Error:", error_msg)
+            logger.error("Request Error: %s", error_msg)
             return error_msg
 
     @staticmethod
@@ -74,11 +77,11 @@ class WhatsAppClient:
                 headers=WHATSAPP_API['headers']
             )
             
-            print(f"Applied label {label_id} to {phone_number}")
+            logger.info("Applied label %s to %s", label_id, phone_number)
             return response.json()
             
         except Exception as e:
-            print(f"Error applying label: {str(e)}\n")
+            logger.error("Error applying label: %s", str(e))
             raise
 
     @staticmethod
@@ -102,9 +105,9 @@ class WhatsAppClient:
                 headers=WHATSAPP_API['headers']
             )
             
-            print(f"Removed label {label_id} from {phone_number}")
+            logger.info("Removed label %s from %s", label_id, phone_number)
             return response.json()
             
         except Exception as e:
-            print(f"Error removing label: {str(e)}\n")
+            logger.error("Error removing label: %s", str(e))
             raise

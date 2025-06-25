@@ -2,7 +2,7 @@
 from typing import Dict, Any, List
 from .abstract_message_handler import AbstractMessageHandler
 from ...utils.errors import ConversationError
-from ...utils.interactive_message_utils import get_button_title
+from ...whatsapp.utils.messages import get_button_title
 from ...config.responses.common import GENERAL
 
 # Mapping between Hebrew button titles and flow types

@@ -1,6 +1,6 @@
 """Core message processing logic for WhatsApp bot."""
 from typing import Dict, Any, List
-from ..utils.validators import validate_sender
+from ..whatsapp.utils.validators import validate_sender
 from .router import MessageRouter
 from .conversation_manager import ConversationManager
 from ..business.flow_factory import BusinessFlowFactory

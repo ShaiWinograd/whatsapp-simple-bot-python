@@ -1,6 +1,6 @@
 from typing import Dict, List
 
-from ..utils.whatsapp_client import WhatsAppClient
+from ..whatsapp.client import WhatsAppClient
 from ..config.whatsapp import LABELS
 
 class LabelManager:
