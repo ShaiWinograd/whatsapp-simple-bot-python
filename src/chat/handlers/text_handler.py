@@ -1,7 +1,7 @@
 """Text message handler implementation."""
 from typing import Dict, Any, List
-from .base_handler import BaseMessageHandler
-class TextMessageHandler(BaseMessageHandler):
+from .abstract_message_handler import AbstractMessageHandler
+class TextMessageHandler(AbstractMessageHandler):
     """Handler for text messages."""
 
     def handle(self, message: Dict[str, Any], base_payload: Dict[str, Any]) -> List[Dict[str, Any]]:

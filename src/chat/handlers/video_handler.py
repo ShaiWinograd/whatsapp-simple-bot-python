@@ -1,9 +1,9 @@
 """Video message handler implementation."""
 from typing import Dict, Any, List
-from .base_handler import BaseMessageHandler
+from .abstract_message_handler import AbstractMessageHandler
 
 
-class VideoMessageHandler(BaseMessageHandler):
+class VideoMessageHandler(AbstractMessageHandler):
     """Handler for video messages."""
 
     def handle(self, message: Dict[str, Any], base_payload: Dict[str, Any]) -> List[Dict[str, Any]]:

@@ -1,5 +1,5 @@
 """Message handlers package."""
-from .base_handler import BaseMessageHandler
+from .abstract_message_handler import AbstractMessageHandler
 from .text_handler import TextMessageHandler
 from .interactive_handler import InteractiveMessageHandler
 from .image_handler import ImageMessageHandler

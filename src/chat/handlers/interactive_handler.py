@@ -1,6 +1,6 @@
 """Interactive message handler implementation."""
 from typing import Dict, Any, List
-from .base_handler import BaseMessageHandler
+from .abstract_message_handler import AbstractMessageHandler
 from ...utils.errors import ConversationError
 from ...utils.interactive_message_utils import get_button_title
 from ...config.responses.common import GENERAL
@@ -14,7 +14,7 @@ FLOW_TYPE_MAPPING = {
 }
 
 
-class InteractiveMessageHandler(BaseMessageHandler):
+class InteractiveMessageHandler(AbstractMessageHandler):
     """Handler for interactive messages and button replies."""
 
     def handle(self, message: Dict[str, Any], base_payload: Dict[str, Any]) -> List[Dict[str, Any]]:
