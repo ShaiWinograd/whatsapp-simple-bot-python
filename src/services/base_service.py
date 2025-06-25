@@ -74,9 +74,10 @@ class BaseConversationService(ABC):
         Args:
             state (str): New state to set
         """
-        self.conversation_state = state
+        # Update state in conversation manager if available, otherwise update local state
         if self.conversation_manager:
             self.conversation_manager.update_service_state(self.recipient, state)
+        self.conversation_state = state
 
     def _create_interactive_message_from_config(self, config: Dict[str, Any], buttons_key: str = 'buttons') -> Dict[str, Any]:
         """
@@ -206,8 +207,7 @@ class BaseConversationService(ABC):
         Returns:
             List[Dict[str, Any]]: List of completion messages
         """
-        if self.conversation_manager:
-            self.conversation_manager.update_service_state(self.recipient, "completed")
+        self.set_conversation_state("completed")
         messages = []
         
         try:
@@ -240,8 +240,7 @@ class BaseConversationService(ABC):
                 raise ValueError("Failed to create interactive scheduling message")
 
             messages.append(schedule_msg)
-            if self.conversation_manager:
-                self.conversation_manager.update_service_state(self.recipient, "awaiting_slot_selection")
+            self.set_conversation_state("awaiting_slot_selection")
             
             return messages
             

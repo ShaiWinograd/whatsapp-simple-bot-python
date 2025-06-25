@@ -43,25 +43,17 @@ class MovingService(BaseConversationService):
 
     def handle_initial_message(self) -> List[Dict[str, Any]]:
         """Handle initial moving service conversation."""
-        if self.conversation_manager:
-            self.conversation_manager.update_service_state(self.recipient, "awaiting_packing_choice")
-        else:
-            self.set_conversation_state("awaiting_packing_choice")
-            
+        self.set_conversation_state("awaiting_packing_choice")
         print("\nCreating initial moving service message...")
         return [self._create_interactive_message_from_config(INITIAL)]
 
     def _reset_to_main_menu(self) -> List[Dict[str, Any]]:
         """Reset service state and return to main menu."""
-        if self.conversation_manager:
-            self.conversation_manager.update_service_state(self.recipient, "initial")
-        else:
-            self.set_conversation_state("initial")
-            
         # Reset service data
         self.service_type = None
         self.selected_time_slot = None
         self.customer_details = None
+        self.set_conversation_state("initial")
         
         # Return welcome message using common configuration
         return [self._create_interactive_message_from_config({
@@ -78,10 +70,7 @@ class MovingService(BaseConversationService):
         if selected_option == NAVIGATION['back_to_main']:
             return self._reset_to_main_menu()
         elif selected_option == NAVIGATION['talk_to_representative']:
-            if self.conversation_manager:
-                self.conversation_manager.update_service_state(self.recipient, "awaiting_emergency_support")
-            else:
-                self.set_conversation_state("awaiting_emergency_support")
+            self.set_conversation_state("awaiting_emergency_support")
             return [self._create_emergency_support_message()]
         
         option_map = {
@@ -92,10 +81,7 @@ class MovingService(BaseConversationService):
         
         if selected_option in option_map:
             self.service_type = option_map[selected_option]
-            if self.conversation_manager:
-                self.conversation_manager.update_service_state(self.recipient, "awaiting_customer_details")
-            else:
-                self.set_conversation_state("awaiting_customer_details")
+            self.set_conversation_state("awaiting_customer_details")
             return [self._create_details_message()]
             
         return [self.create_text_message(GENERAL['error'])]
@@ -126,17 +112,11 @@ class MovingService(BaseConversationService):
         """Handle response to emergency support question."""
         selected_option = get_button_title(message)
         if selected_option == 'כן':
-            if self.conversation_manager:
-                self.conversation_manager.update_service_state(self.recipient, "awaiting_emergency_support")
-            else:
-                self.set_conversation_state("awaiting_emergency_support")
+            self.set_conversation_state("awaiting_emergency_support")
             # Create text message with proper type field to avoid handler recursion
             return [self.create_text_message(URGENT_SUPPORT_MESSAGE)]
         elif selected_option == 'לא':
-            if self.conversation_manager:
-                self.conversation_manager.update_service_state(self.recipient, "awaiting_slot_selection")
-            else:
-                self.set_conversation_state("awaiting_slot_selection")
+            self.set_conversation_state("awaiting_slot_selection")
             return [self._create_interactive_message_from_config(TIME_SLOTS)]
         return [self.create_text_message(GENERAL['error'])]
 
@@ -170,17 +150,11 @@ class MovingService(BaseConversationService):
     def _handle_photos(self, message: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Handle photo submission or skip option."""
         if 'image' in message:
-            if self.conversation_manager:
-                self.conversation_manager.update_service_state(self.recipient, "awaiting_slot_selection")
-            else:
-                self.set_conversation_state("awaiting_slot_selection")
+            self.set_conversation_state("awaiting_slot_selection")
             return [self._create_interactive_message_from_config(TIME_SLOTS)]
         selected_option = get_button_title(message)
         if selected_option == 'מעדיפים לדלג':
-            if self.conversation_manager:
-                self.conversation_manager.update_service_state(self.recipient, "awaiting_slot_selection")
-            else:
-                self.set_conversation_state("awaiting_slot_selection")
+            self.set_conversation_state("awaiting_slot_selection")
             return [self._create_interactive_message_from_config(TIME_SLOTS)]
         return [self.create_text_message(GENERAL['error'])]
 
@@ -195,10 +169,7 @@ class MovingService(BaseConversationService):
             
         self.customer_details = text
         
-        if self.conversation_manager:
-            self.conversation_manager.update_service_state(self.recipient, "awaiting_verification")
-        else:
-            self.set_conversation_state("awaiting_verification")
+        self.set_conversation_state("awaiting_verification")
             
         verify_config = {
             'body': VERIFY_DETAILS['message'].format(details=self.customer_details),
@@ -213,16 +184,10 @@ class MovingService(BaseConversationService):
         selected_option = get_button_title(message)
         
         if selected_option == 'כן':
-            if self.conversation_manager:
-                self.conversation_manager.update_service_state(self.recipient, "awaiting_photos")
-            else:
-                self.set_conversation_state("awaiting_photos")
+            self.set_conversation_state("awaiting_photos")
             return [self._create_interactive_message_from_config(PHOTOS)]
         elif selected_option == 'לא':
-            if self.conversation_manager:
-                self.conversation_manager.update_service_state(self.recipient, "awaiting_customer_details")
-            else:
-                self.set_conversation_state("awaiting_customer_details")
+            self.set_conversation_state("awaiting_customer_details")
             return [self._create_details_message()]
             
         return [self.create_text_message(GENERAL['error'])]
@@ -246,10 +211,7 @@ class MovingService(BaseConversationService):
         
         if current_state not in valid_states:
             print(f"Invalid state encountered: {current_state}")
-            if self.conversation_manager:
-                self.conversation_manager.update_service_state(self.recipient, "awaiting_packing_choice")
-            else:
-                self.set_conversation_state("awaiting_packing_choice")
+            self.set_conversation_state("awaiting_packing_choice")
             return self.handle_initial_message()
             
         try:
