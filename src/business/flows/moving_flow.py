@@ -92,7 +92,7 @@ class MovingFlow(AbstractBusinessFlow):
                 )
                 
             elif self._conversation_state == 'awaiting_verification':
-                return MessagePayloadBuilder.create_message(
+                return MessagePayloadBuilder.create_interactive_message(
                     body_text=VERIFY_DETAILS['body'].format(details=self._customer_details)
                 )
                 
@@ -115,13 +115,13 @@ class MovingFlow(AbstractBusinessFlow):
                 )
                 
             logger.error(f"Invalid state for message: {self._conversation_state}")
-            return MessagePayloadBuilder.create_message(
+            return MessagePayloadBuilder.create_interactive_message(
                 body_text=GENERAL['error']
             )
 
         except Exception as e:
             logger.error(f"Error getting next message: {str(e)}")
-            return MessagePayloadBuilder.create_message(
+            return MessagePayloadBuilder.create_interactive_message(
                 body_text=GENERAL['error']
             )
 

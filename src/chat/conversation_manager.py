@@ -94,7 +94,7 @@ class ConversationManager:
             self.update_conversation_state(user_id, next_state)
             return flow.get_next_message()
         # No active conversation, return welcome message
-        welcome_msg = MessagePayloadBuilder.create_message(
+        welcome_msg = MessagePayloadBuilder.create_interactive_message(
             recipient=user_id,
             body_text=WELCOME['message'],
             buttons=[

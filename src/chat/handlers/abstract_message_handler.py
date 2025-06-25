@@ -69,7 +69,7 @@ class AbstractMessageHandler(ABC):
         """
         # If message contains button definitions, create interactive message
         if "buttons" in message:
-            return MessagePayloadBuilder.create_message(recipient=recipient, **message)
+            return MessagePayloadBuilder.create_interactive_message(recipient=recipient, **message)
         # Otherwise create text message
         return MessagePayloadBuilder.create_text_message(recipient=recipient, body_text=message)
 
@@ -93,7 +93,7 @@ class AbstractMessageHandler(ABC):
         Returns:
             Dict[str, Any]: Interactive message payload
         """
-        return MessagePayloadBuilder.create_message(
+        return MessagePayloadBuilder.create_interactive_message(
             recipient=recipient,
             body_text=body_text,
             header_text=header_text,

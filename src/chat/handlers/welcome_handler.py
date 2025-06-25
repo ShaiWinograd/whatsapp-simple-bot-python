@@ -1,7 +1,8 @@
 """Welcome message handler implementation."""
 from typing import Dict, Any, List
+
 from ...models.message_payload import MessagePayloadBuilder
-from ...config.responses.common import WELCOME
+from ...config.responses.common import WELCOME, NAVIGATION
 
 class WelcomeHandler:
     """Handles initial welcome messages and service selection."""
@@ -25,12 +26,15 @@ class WelcomeHandler:
         Returns:
             Dict[str, Any]: Welcome message payload
         """
-        return MessagePayloadBuilder.create_message(
+        return MessagePayloadBuilder.create_interactive_message(
             recipient=recipient,
             body_text=WELCOME['message'],
+            header_text=WELCOME['header'],
             buttons=[
                 {"id": "moving", "title": WELCOME['moving_button']},
-                {"id": "organization", "title": WELCOME['organization_button']}
+                {"id": "organization", "title": WELCOME['organization_button']},
+                {"id": "other", "title": WELCOME['other_button']},
+                {"id": "help", "title": NAVIGATION['talk_to_representative']}
             ]
         )
 
