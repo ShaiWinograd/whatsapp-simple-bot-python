@@ -33,9 +33,11 @@ class WhatsAppClient:
         Raises:
             ValueError: If required fields are missing
         """
-        # Determine message type and validate payload
-        message_type = 'interactive' if 'action' in payload else 'text'
-            
+        # Determine message type from payload structure
+        message_type = 'text'
+        if payload.get('type') == 'button':
+            message_type = 'interactive'
+        
         if message_type == 'interactive':
             required_fields = ['messaging_product', 'to', 'type', 'body', 'action']
             if not all(key in payload for key in required_fields):
@@ -47,19 +49,14 @@ class WhatsAppClient:
             if 'buttons' not in payload['action']:
                 raise ValueError("Interactive message action must have 'buttons' field")
         else:
-            # For text messages, ensure proper structure
-            if 'text' not in payload:
-                # Convert legacy format to new format
-                payload = {
-                    "messaging_product": "whatsapp",
-                    "recipient_type": "individual",
-                    "to": payload.get("to"),
-                    "type": "text",
-                    "text": {
-                        "preview_url": False,
-                        "body": payload.get("body", "")
-                    }
-                }
+            # For text messages, validate required fields
+            required_fields = ['messaging_product', 'to', 'body']
+            if not all(key in payload for key in required_fields):
+                raise ValueError(f"Text messages must have these fields: {', '.join(required_fields)}")
+            
+            # For text messages, body must be a string
+            if not isinstance(payload['body'], str):
+                raise ValueError("Text message body must be a string")
             
         url = get_api_url(message_type)
         print(f"Sending {message_type} message to {url}")

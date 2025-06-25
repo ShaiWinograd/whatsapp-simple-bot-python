@@ -40,7 +40,7 @@ class InteractiveMessageHandler(AbstractMessageHandler):
 
         # Extract button selection
         selected_option = self._get_selected_option(message)
-        if not selected_option:
+        if not selected_option: 
             print("No button selection found in message")
             return WelcomeHandler(self._conversation_manager, self._flow_factory).handle_welcome(recipient)
 
@@ -69,7 +69,6 @@ class InteractiveMessageHandler(AbstractMessageHandler):
             print(f"Found flow type mapping for: {selected_option}")
             try:
                 flow_type = FLOW_TYPE_MAPPING[selected_option]
-                print(f"Starting flow of type: {flow_type}")
                 
                 # Start new conversation with selected flow
                 self._conversation_manager.start_conversation(recipient, flow_type)

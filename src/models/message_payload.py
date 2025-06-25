@@ -87,11 +87,7 @@ class MessagePayloadBuilder:
         """
         return {
             "messaging_product": "whatsapp",
-            "recipient_type": "individual",
             "to": recipient,
-            "type": "text",
-            "text": {
-                "preview_url": False,
-                "body": body_text
-            }
+            "body": body_text,
+            "no_link_preview": True  # Equivalent to preview_url: False
         }
