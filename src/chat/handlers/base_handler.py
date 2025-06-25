@@ -2,10 +2,10 @@
 from abc import ABC, abstractmethod
 from typing import Dict, Any, List, Optional
 from ...business.flow_factory import BusinessFlowFactory
-from ...business.flows.base_flow import BusinessFlow
+from ...business.flows.abstract_business_flow import AbstractBusinessFlow
 from ..conversation_manager import ConversationManager
 from ...utils.text_message_builder import create_text_message as create_text_payload
-from ...utils.interactive_message_builder import create_interactive_message
+from ...utils.interactive_message_builder import InteractiveMessageBuilder
 
 
 class BaseMessageHandler(ABC):
@@ -68,7 +68,7 @@ class BaseMessageHandler(ABC):
         """
         # If message contains button definitions, create interactive message
         if "buttons" in message:
-            return create_interactive_message(recipient=recipient, **message)
+            return InteractiveMessageBuilder.create_message(recipient=recipient, **message)
         # Otherwise create text message
         return create_text_payload(recipient=recipient, body_text=message)
 
@@ -92,7 +92,7 @@ class BaseMessageHandler(ABC):
         Returns:
             Dict[str, Any]: Interactive message payload
         """
-        return create_interactive_message(
+        return InteractiveMessageBuilder.create_message(
             recipient=recipient,
             body_text=body_text,
             header_text=header_text,

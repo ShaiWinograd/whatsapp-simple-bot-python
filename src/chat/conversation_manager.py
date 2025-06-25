@@ -1,6 +1,6 @@
 from typing import Optional
 
-from ..business.flows.base_flow import BusinessFlow
+from ..business.flows.abstract_business_flow import AbstractBusinessFlow as BusinessFlow
 from ..business.flow_factory import BusinessFlowFactory
 from .state_manager import StateManager
 from .label_manager import LabelManager
