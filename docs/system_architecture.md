@@ -4,56 +4,60 @@
 
 ```mermaid
 graph TD
-    subgraph Frontend
-        WA[WhatsApp Client]
+    WA[WhatsApp Client]
+    WH[Webhook Handler]
+    MR[Message Router]
+    
+    subgraph Handlers[Message Handlers]
+        TH[Text Handler]
+        IH[Interactive Handler]
+        IMH[Image Handler]
+        VH[Video Handler]
     end
-
-    subgraph Flask Application
-        WH[Webhook Handler]
-        MR[Message Router]
-        
-        subgraph Message Handlers
-            TH[Text Handler]
-            IH[Interactive Handler]
-            IMH[Image Handler]
-            VH[Video Handler]
-        end
-        
-        subgraph Business Layer
-            BFF[Business Flow Factory]
-            BFM[Business Flow Manager]
-            
-            subgraph Flows
-                MF[Moving Flow]
-                OF[Organization Flow]
-            end
-        end
-        
-        subgraph State Management
-            CM[Conversation Manager]
-            SM[State Manager]
-            LM[Label Manager]
-            TM[Timeout Manager]
-        end
+    
+    subgraph Business[Business Layer]
+        BFF[Business Flow Factory]
+        BFM[Business Flow Manager]
+        MF[Moving Flow]
+        OF[Organization Flow]
+    end
+    
+    subgraph State[State Management]
+        CM[Conversation Manager]
+        SM[State Manager]
+        LM[Label Manager]
+        TM[Timeout Manager]
     end
 
     WA -->|Messages| WH
     WH -->|Route| MR
-    MR -->|Dispatch| Message Handlers
-    Message Handlers -->|Create| BFF
-    BFF -->|Manage| Flows
-    Flows -->|Update| BFM
+    MR -->|Dispatch| Handlers
+    Handlers -->|Create| BFF
+    BFF -->|Manage| MF
+    BFF -->|Manage| OF
+    MF & OF -->|Update| BFM
     BFM -->|Manage| SM
     BFM -->|Update| LM
     CM -->|Track| SM
     CM -->|Monitor| TM
-    Message Handlers -->|Send| WA
+    Handlers -->|Send| WA
 ```
 
 ## Class Diagram
 
 ```mermaid
 classDiagram
+    MessageRouter o-- BaseMessageHandler
+    MessageRouter o-- BusinessFlowFactory
+    BusinessFlowManager o-- StateManager
+    BusinessFlowManager o-- LabelManager
+    ConversationManager o-- TimeoutManager
+    AbstractBusinessFlow <|-- MovingFlow
+    AbstractBusinessFlow <|-- OrganizationFlow
+    BaseMessageHandler <|-- TextMessageHandler
+    BaseMessageHandler <|-- InteractiveMessageHandler
+    BaseMessageHandler <|-- ImageMessageHandler
+    
     class MessageRouter {
         -ConversationManager _conversation_manager
         -BusinessFlowFactory _flow_factory
@@ -96,17 +100,6 @@ classDiagram
         #BusinessFlowFactory flow_factory
         +handle(message, base_payload)*
     }
-
-    AbstractBusinessFlow <|-- MovingFlow
-    AbstractBusinessFlow <|-- OrganizationFlow
-    BaseMessageHandler <|-- TextMessageHandler
-    BaseMessageHandler <|-- InteractiveMessageHandler
-    BaseMessageHandler <|-- ImageMessageHandler
-    MessageRouter --> BaseMessageHandler
-    MessageRouter --> BusinessFlowFactory
-    BusinessFlowManager --> StateManager
-    BusinessFlowManager --> LabelManager
-    ConversationManager --> TimeoutManager
 ```
 
 ## Component Details
