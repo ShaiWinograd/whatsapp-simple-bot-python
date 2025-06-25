@@ -3,22 +3,13 @@ import os
 from dotenv import load_dotenv
 from src.chat import MessageHandler, ConversationManager
 from src.utils.whatsapp_client import WhatsAppClient
-from src.services.service_factory import ServiceFactory, ServiceType
-from src.services.organization_service import OrganizationService
-from src.services.moving_service import MovingService
-from src.services.human_service import HumanSupportService
+from src.business.flow_factory import BusinessFlowFactory
 
 load_dotenv()  # Load environment variables from a .env file
 
-# Register service implementations
-ServiceFactory.register(ServiceType.ORGANIZATION, OrganizationService)
-ServiceFactory.register(ServiceType.MOVING, MovingService)
-ServiceFactory.register(ServiceType.HUMAN_SUPPORT, HumanSupportService)
-
 # Initialize the message handler with its dependencies
 conversation_manager = ConversationManager()
-service_factory = ServiceFactory()
-message_handler = MessageHandler(conversation_manager, service_factory)
+message_handler = MessageHandler(conversation_manager, BusinessFlowFactory())
 
 app = Flask(__name__)
 

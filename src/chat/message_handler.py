@@ -3,25 +3,23 @@ from typing import Dict, Any, List
 from ..utils.validators import validate_sender
 from .router import MessageRouter
 from .conversation_manager import ConversationManager
-from ..services.service_factory import ServiceFactory
+from ..business.flow_factory import BusinessFlowFactory
 
 
 class MessageHandler:
     """Handles incoming WhatsApp messages."""
 
-    def __init__(self, conversation_manager: ConversationManager, service_factory: ServiceFactory):
-        """
-        Initialize MessageHandler.
+    def __init__(self, conversation_manager: ConversationManager, flow_factory: BusinessFlowFactory):
+        """Initialize MessageHandler.
         
         Args:
             conversation_manager (ConversationManager): Manager for user conversations
-            service_factory (ServiceFactory): Factory for creating service instances
+            flow_factory (BusinessFlowFactory): Factory for creating business flow instances
         """
-        self.router = MessageRouter(conversation_manager, service_factory)
+        self.router = MessageRouter(conversation_manager, flow_factory)
 
     def process_message(self, message: Dict[str, Any]) -> List[Dict[str, Any]]:
-        """
-        Process incoming WhatsApp message and return appropriate response payload.
+        """Process incoming WhatsApp message and return appropriate response payload.
         
         Args:
             message (Dict[str, Any]): The incoming WhatsApp message
