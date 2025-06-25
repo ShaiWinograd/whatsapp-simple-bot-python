@@ -1,39 +1,20 @@
-"""Common response structures and general messages."""
+"""Common response configurations.
 
-GENERAL = {
-    'intro': 'שלום!\nהגעתם לעוזר הדיגיטלי של S&O.\nאני כאן לעזור לכם למצוא את השירות המתאים ולענות על כל שאלה.\nלנוחותכם, בכל שלב ניתן לחזור לתפריט הראשי או לשוחח עם נציג/ה באמצעות הכפתורים בתחתית.',
-    'header': 'ברוכים הבאים לSpace & Order',
-    'welcome_message': 'בתור התחלה, אנא בחרו את השירות בו אתם מתעניינים:',
-    'footer': '',
-    'options': [
-        'מעבר דירה',
-        'סידור וארגון הבית',
-        'אחר',
-        'שיחה עם נציג/ה'
-    ],
-    'error': 'מצטערים, לא הצלחנו להבין את ההודעה. האם תוכל/י לנסח אותה מחדש?'
-}
+This module contains message templates and configurations shared across
+different service flows.
+"""
+from typing import Dict
 
-HUMAN_SUPPORT = {
-    'transfer_message': 'תודה על פנייתך! נציג/ה מהצוות שלנו יחזור אליך בהקדם.'
-}
-
-SCHEDULING = {
-    'header': 'תיאום פגישה',
-    'title': 'איזה מועד נוח לך?',
-    'footer': '',
-}
-
-NAVIGATION = {
+NAVIGATION: Dict[str, str] = {
     'back_to_main': 'חזרה לתפריט הראשי',
-    'talk_to_representative': 'שיחה עם נציג/ה'
+    'talk_to_representative': 'שיחה עם נציג'
 }
 
-CALL_SCHEDULING = {
-    'confirmation': {
-        'header': 'תיאום שיחה',
-        'body_template': 'מעולה! נציג שלנו יתקשר אליך ב{slot}.',
-        'footer': 'אם תרצו לשנות את מועד השיחה, לחצו על הכפתור למטה',
-        'change_slot_button': 'שינוי מועד השיחה'
-    }
+GENERAL: Dict[str, str] = {
+    'back_confirmation': 'בוצע, חוזרים לתפריט הראשי',
+    'representative_redirect': 'מעביר אותך לשיחה עם נציג...',
+    'error': 'מצטערים, אירעה שגיאה. אנא נסו שוב או פנו לנציג שירות.',
+    'invalid_input': 'מצטערים, הקלט אינו תקין. אנא נסו שוב.'
 }
+
+__all__ = ['NAVIGATION', 'GENERAL']

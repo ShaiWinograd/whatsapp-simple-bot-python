@@ -7,7 +7,7 @@ from ...models.webhook_payload import (
     MessageHeader,
     MessageFooter
 )
-from ...config.responses.common import GENERAL
+from ..templates import GENERAL
 from ...utils.logger import setup_logger
 
 logger = setup_logger(__name__)

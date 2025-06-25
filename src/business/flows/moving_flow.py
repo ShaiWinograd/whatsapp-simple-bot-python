@@ -2,7 +2,7 @@ from typing import Dict, Any, Optional
 
 from .abstract_business_flow import AbstractBusinessFlow
 from ...whatsapp.utils.messages import MessageBuilder, get_button_title
-from ...config.responses.moving import (
+from .moving.messages import (
     RESPONSES as MOVING_RESPONSES,
     SERVICE,
     URGENT_SUPPORT_MESSAGE,
@@ -15,7 +15,8 @@ from ...config.responses.moving import (
     VERIFY,
     PHOTOS
 )
-from ...config.responses.common import NAVIGATION, GENERAL
+from ..messages import NAVIGATION
+from ...whatsapp.templates import GENERAL
 
 class MovingFlow(AbstractBusinessFlow):
     """Handles the moving service business flow"""

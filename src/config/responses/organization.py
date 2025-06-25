@@ -1,22 +1,43 @@
-"""Organization service responses."""
-from .common import NAVIGATION, SCHEDULING
+"""Organization service response configurations.
 
-DETAILS = """כדי שנוכל לוודא שאתם גרים בטווח השירות שלנו, אנא שלחו בהודעה חוזרת את כל הפרטים הבאים:
-
-שם מלא
-כתובת (עיר, רחוב ומספר בית)
-כתובת מייל
-ספרו בקצרה על ההרכב המשפחתי ואופי הסידור המבוקש:
-כל הבית, חדר מסוים, שינוי בין חדרים, הוספת פתרונות אחסון וכו׳
+This module contains all message templates and configurations specific to
+the organization service flow.
 """
+from typing import Dict
+from .types import (
+    ButtonMessage,
+    MessageWithOptions,
+    BaseMessage,
+    ServiceResponse,
+    OrganizationResponseCollection
+)
+from .common import NAVIGATION
 
-VERIFY_DETAILS = {
-    'message': """אלו הפרטים שקיבלנו ממך:
+# Initial service selection
+INITIAL: ButtonMessage = {
+    'header': 'ארגון וסידור הבית',
+    'body': "נשמח לעזור לכם לארגן ולסדר את הבית!\nבמה נוכל לסייע?",
+    'footer': '',
+    'buttons': [
+        'סידור וארגון כללי',
+        'סידור ארונות',
+        'סידור מטבח',
+        NAVIGATION['back_to_main'],
+        NAVIGATION['talk_to_representative']
+    ]
+}
+
+# Details verification
+VERIFY_DETAILS: MessageWithOptions = {
+    'header': 'אימות פרטים',
+    'body': """אלו הפרטים שקיבלנו ממך:
 
 {details}
 
 האם הפרטים נכונים?""",
+    'footer': '',
     'options': {
+        'title': 'האם הפרטים נכונים?',
         'buttons': [
             'כן, הפרטים נכונים',
             'לא, צריך לתקן',
@@ -26,51 +47,38 @@ VERIFY_DETAILS = {
     }
 }
 
-REWRITE_DETAILS = {
-    'header': 'ארגון וסידור הבית',
-    'body': DETAILS,
-    'footer': '',
-    'buttons': [
-        NAVIGATION['back_to_main'],
-        NAVIGATION['talk_to_representative']
-    ]
+# Service completion messages
+COMPLETION: Dict[str, str] = {
+    'success': """תודה שפנית אלינו!
+נציג שלנו יצור איתך קשר בהקדם לתיאום הפגישה."""
 }
 
-COMPLETION = {
-    'header': 'מוכנים להתחיל?',
-    'after_media': """נהדר! הצעד הראשון הוא פגישת ייעוץ חינמית בה נכיר את המרחב שלך ונבנה יחד תכנית פעולה מותאמת אישית.
-כדי שנדע מתי להתקשר אליכם, אנא בחרו מועד נוח מהאפשרויות הבאות:""",
-    'footer': ''
-}
-
-SERVICE = {
-    'name': 'ארגון וסידור הבית'
-}
-
-VERIFY = {
-    'header': 'אימות פרטים',
-    'footer': ''
-}
-
-SCHEDULING = {
-    'header': 'תיאום שיחת טלפון',
-    'footer': ''
-}
-
-FALLBACK = {
+FALLBACK: BaseMessage = {
     'header': 'הפניה התקבלה',
     'body': 'תודה על פנייתך! נציג מהצוות שלנו יצור איתך קשר בהקדם.',
     'footer': ''
 }
 
-# Export all responses
-RESPONSES = {
-    'initial': DETAILS,
-    'verify_details': VERIFY_DETAILS,
-    'completed': COMPLETION,
-    'verify': VERIFY,
-    'scheduling': SCHEDULING,
-    'fallback': FALLBACK,
-    'rewrite_details': REWRITE_DETAILS,
-    'service_name': SERVICE['name']
+SERVICE: ServiceResponse = {
+    'name': 'ארגון וסידור הבית'
 }
+
+# Export all responses with type safety
+SERVICE_RESPONSES = {
+    'organization': {
+        'initial': INITIAL,
+        'verify_details': VERIFY_DETAILS,
+        'completed': COMPLETION,
+        'fallback': FALLBACK,
+        'service_name': SERVICE['name']
+    }
+}
+
+__all__ = [
+    'SERVICE_RESPONSES',
+    'SERVICE',
+    'INITIAL',
+    'VERIFY_DETAILS',
+    'COMPLETION',
+    'FALLBACK'
+]
