@@ -5,9 +5,18 @@ from ...config.responses.common import WELCOME
 
 class WelcomeHandler:
     """Handles initial welcome messages and service selection."""
+    
+    def __init__(self, conversation_manager, flow_factory):
+        """Initialize WelcomeHandler with required dependencies.
+        
+        Args:
+            conversation_manager: The conversation manager instance
+            flow_factory: The flow factory instance
+        """
+        self._conversation_manager = conversation_manager
+        self._flow_factory = flow_factory
 
-    @staticmethod
-    def create_welcome_payload(recipient: str) -> Dict[str, Any]:
+    def create_welcome_payload(self, recipient: str) -> Dict[str, Any]:
         """Create welcome message with service selection buttons
         
         Args:
@@ -25,8 +34,7 @@ class WelcomeHandler:
             ]
         )
 
-    @staticmethod
-    def handle_welcome(recipient: str) -> List[Dict[str, Any]]:
+    def handle_welcome(self, recipient: str) -> List[Dict[str, Any]]:
         """Handle initial welcome for a user
         
         Args:
@@ -35,4 +43,4 @@ class WelcomeHandler:
         Returns:
             List[Dict[str, Any]]: List containing welcome message payload
         """
-        return [WelcomeHandler.create_welcome_payload(recipient)]
+        return [self.create_welcome_payload(recipient)]
