@@ -1,11 +1,13 @@
-from typing import Optional
+from typing import Optional, Dict, Any, List
 
 from ..business.flows.abstract_business_flow import AbstractBusinessFlow as BusinessFlow
 from ..business.flow_factory import BusinessFlowFactory
 from .state_manager import StateManager
-from .label_manager import LabelManager
+from ..whatsapp.label_manager import LabelManager
 from .timeout_manager import TimeoutManager
 from .business_flow_manager import BusinessFlowManager
+from ..models.message_payload import MessagePayloadBuilder
+from ..config.responses.common import WELCOME
 
 class ConversationManager:
     """Main coordinator for all conversation-related operations"""
@@ -91,4 +93,13 @@ class ConversationManager:
             next_state = flow.handle_input(user_input)
             self.update_conversation_state(user_id, next_state)
             return flow.get_next_message()
-        return None
+        # No active conversation, return welcome message
+        welcome_msg = MessagePayloadBuilder.create_message(
+            recipient=user_id,
+            body_text=WELCOME['message'],
+            buttons=[
+                {"id": "moving", "title": WELCOME['moving_button']},
+                {"id": "organization", "title": WELCOME['organization_button']}
+            ]
+        )
+        return welcome_msg

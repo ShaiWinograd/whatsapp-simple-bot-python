@@ -1,9 +1,10 @@
 """WhatsApp messaging functionality."""
 from .client import WhatsAppClient
-from .utils.messages import MessageBuilder, get_button_title
+from .utils.message_parser import get_button_title
+from .label_manager import LabelManager
 
 __all__ = [
     'WhatsAppClient',
-    'MessageBuilder',
-    'get_button_title'
+    'get_button_title',
+    'LabelManager'
 ]

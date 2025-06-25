@@ -1,7 +1,8 @@
 """Utilities for WhatsApp messaging."""
-from .messages import MessageBuilder, get_button_title
+from .message_parser import get_button_title
+from .validators import validate_sender
 
 __all__ = [
-    'MessageBuilder',
-    'get_button_title'
+    'get_button_title',
+    'validate_sender'
 ]

@@ -6,10 +6,12 @@ from .webhook_payload import (
     MediaMessagePayload,
     InteractiveMessagePayload
 )
+from .message_payload import MessagePayloadBuilder
 
 __all__ = [
     'BaseWebhookPayload',
     'TextMessagePayload',
     'MediaMessagePayload',
-    'InteractiveMessagePayload'
+    'InteractiveMessagePayload',
+    'MessagePayloadBuilder'
 ]

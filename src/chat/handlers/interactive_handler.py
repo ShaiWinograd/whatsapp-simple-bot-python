@@ -1,9 +1,9 @@
 """Interactive message handler implementation."""
 from typing import Dict, Any, List
 from .abstract_message_handler import AbstractMessageHandler
+from .welcome_handler import WelcomeHandler
 from ...utils.errors import ConversationError
-from ...whatsapp.utils.messages import get_button_title
-from ...config.responses.common import GENERAL
+from ...whatsapp.utils.message_parser import get_button_title
 
 # Mapping between Hebrew button titles and flow types
 FLOW_TYPE_MAPPING = {
@@ -36,13 +36,13 @@ class InteractiveMessageHandler(AbstractMessageHandler):
             conversation_response = self.check_existing_conversation(recipient, message)
             if conversation_response is not None:
                 return conversation_response
-            return [self.create_welcome_payload(recipient)]
+            return WelcomeHandler(self._conversation_manager, self._flow_factory).handle_welcome(recipient)
 
         # Extract button selection
         selected_option = self._get_selected_option(message)
         if not selected_option:
             print("No button selection found in message")
-            return [self.create_welcome_payload(recipient)]
+            return WelcomeHandler(self._conversation_manager, self._flow_factory).handle_welcome(recipient)
 
         print("Processing selected option:", selected_option)
 
@@ -50,7 +50,7 @@ class InteractiveMessageHandler(AbstractMessageHandler):
         if selected_option == 'חזרה לתפריט הראשי':
             print("User requested main menu")
             self._conversation_manager.remove_conversation(recipient)
-            return [self.create_welcome_payload(recipient)]
+            return WelcomeHandler(self._conversation_manager, self._flow_factory).handle_welcome(recipient)
 
         # Try to handle the selected option as a flow type
         if selected_option in FLOW_TYPE_MAPPING:
@@ -72,14 +72,14 @@ class InteractiveMessageHandler(AbstractMessageHandler):
                     
             except ConversationError as e:
                 print(f"Error creating flow: {e}")
-                return [self.create_welcome_payload(recipient)]
+                return WelcomeHandler(self._conversation_manager, self._flow_factory).handle_welcome(recipient)
 
         # Check for existing conversation if no option was handled
         conversation_response = self.check_existing_conversation(recipient, message)
         if conversation_response is not None:
             return conversation_response
 
-        return [self.create_welcome_payload(recipient)]
+        return WelcomeHandler(self._conversation_manager, self._flow_factory).handle_welcome(recipient)
 
     def _get_selected_option(self, message: Dict[str, Any]) -> str:
         """Extract the selected option from an interactive message
@@ -97,26 +97,3 @@ class InteractiveMessageHandler(AbstractMessageHandler):
                 return button_reply['title']
                 
         return get_button_title(message)
-
-    def create_welcome_payload(self, recipient: str) -> Dict[str, Any]:
-        """Create welcome message with available options
-        
-        Args:
-            recipient (str): The recipient's phone number
-            
-        Returns:
-            Dict[str, Any]: Welcome message payload
-        """
-        buttons = [
-            {'title': 'מעבר דירה'},
-            {'title': 'סידור וארגון הבית'},
-            {'title': 'אשמח לדבר עם נציג/ה'}
-        ]
-        
-        return self.create_interactive_message(
-            recipient=recipient,
-            body_text=GENERAL['welcome_message'],
-            header_text=GENERAL['header'],
-            footer_text=GENERAL['footer'],
-            buttons=buttons
-        )

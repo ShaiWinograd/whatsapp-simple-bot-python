@@ -5,6 +5,12 @@ different service flows.
 """
 from typing import Dict
 
+WELCOME: Dict[str, str] = {
+    'message': 'שלום! במה נוכל לעזור לך היום?',
+    'moving_button': 'שירותי הובלה',
+    'organization_button': 'שירותי ארגון וסידור'
+}
+
 NAVIGATION: Dict[str, str] = {
     'back_to_main': 'חזרה לתפריט הראשי',
     'talk_to_representative': 'שיחה עם נציג'
@@ -17,4 +23,4 @@ GENERAL: Dict[str, str] = {
     'invalid_input': 'מצטערים, הקלט אינו תקין. אנא נסו שוב.'
 }
 
-__all__ = ['NAVIGATION', 'GENERAL']
+__all__ = ['WELCOME', 'NAVIGATION', 'GENERAL']

@@ -1,6 +1,8 @@
 """Text message handler implementation."""
 from typing import Dict, Any, List
 from .abstract_message_handler import AbstractMessageHandler
+from .welcome_handler import WelcomeHandler
+from ...config.responses.common import GENERAL
 class TextMessageHandler(AbstractMessageHandler):
     """Handler for text messages."""
 
@@ -24,8 +26,8 @@ class TextMessageHandler(AbstractMessageHandler):
                 return conversation_response
 
             # For any other text message, show the welcome message
-            return self.create_welcome_messages(recipient)
+            return WelcomeHandler(self._conversation_manager, self._flow_factory).handle_welcome(recipient)
             
         except Exception as e:
             print(f"Error handling text message: {str(e)}")
-            return [self.create_text_message(recipient, "Sorry, there was an error processing your message. Please try again.")]
+            return [self.create_text_message(recipient, GENERAL['error'])]

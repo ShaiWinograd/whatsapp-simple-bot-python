@@ -1,7 +1,8 @@
 from typing import Dict, Any, Optional
 
 from .abstract_business_flow import AbstractBusinessFlow
-from ...whatsapp.utils.messages import MessageBuilder, get_button_title
+from ...whatsapp.utils.message_parser import get_button_title
+from ...models.message_payload import MessagePayloadBuilder
 from ...config.responses import SERVICE_RESPONSES, GENERAL
 from ...config.responses.common import NAVIGATION
 

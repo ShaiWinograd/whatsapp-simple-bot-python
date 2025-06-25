@@ -1,17 +1,18 @@
 """Abstract message handler with common functionality."""
 from abc import ABC, abstractmethod
-from typing import Dict, Any, List, Optional
-
+from typing import Dict, Any, List, Optional, TYPE_CHECKING
 from ...business.flow_factory import BusinessFlowFactory
 from ...business.flows.abstract_business_flow import AbstractBusinessFlow
-from ..conversation_manager import ConversationManager
-from ...whatsapp.utils.messages import MessageBuilder
+from ...models.message_payload import MessagePayloadBuilder
+
+if TYPE_CHECKING:
+    from ..conversation_manager import ConversationManager
 
 
 class AbstractMessageHandler(ABC):
     """Abstract base class for message handlers."""
 
-    def __init__(self, conversation_manager: ConversationManager, flow_factory: BusinessFlowFactory):
+    def __init__(self, conversation_manager: "ConversationManager", flow_factory: BusinessFlowFactory):
         """Initialize base handler
         
         Args:
@@ -68,9 +69,9 @@ class AbstractMessageHandler(ABC):
         """
         # If message contains button definitions, create interactive message
         if "buttons" in message:
-            return MessageBuilder.create_message(recipient=recipient, **message)
+            return MessagePayloadBuilder.create_message(recipient=recipient, **message)
         # Otherwise create text message
-        return MessageBuilder.create_text_message(recipient=recipient, body_text=message)
+        return MessagePayloadBuilder.create_text_message(recipient=recipient, body_text=message)
 
     def create_interactive_message(
         self,
@@ -92,7 +93,7 @@ class AbstractMessageHandler(ABC):
         Returns:
             Dict[str, Any]: Interactive message payload
         """
-        return MessageBuilder.create_message(
+        return MessagePayloadBuilder.create_message(
             recipient=recipient,
             body_text=body_text,
             header_text=header_text,
@@ -110,18 +111,4 @@ class AbstractMessageHandler(ABC):
         Returns:
             Dict[str, Any]: Message payload
         """
-        return MessageBuilder.create_text_message(recipient=recipient, body_text=body)
-
-    def create_welcome_messages(self, recipient: str) -> List[Dict[str, Any]]:
-        """Create welcome and options messages
-        
-        Args:
-            recipient (str): The recipient's phone number
-            
-        Returns:
-            List[Dict[str, Any]]: List of message payloads to send
-        """
-        # Create welcome payload using interactive handler
-        from .interactive_handler import InteractiveMessageHandler
-        interactive_handler = InteractiveMessageHandler(self._conversation_manager, self._flow_factory)
-        return [interactive_handler.create_welcome_payload(recipient)]
+        return MessagePayloadBuilder.create_text_message(recipient=recipient, body_text=body)

@@ -4,5 +4,13 @@ from .text_handler import TextMessageHandler
 from .interactive_handler import InteractiveMessageHandler
 from .image_handler import ImageMessageHandler
 from .video_handler import VideoMessageHandler
+from .welcome_handler import WelcomeHandler
 
-__all__ = ['BaseMessageHandler', 'TextMessageHandler', 'InteractiveMessageHandler', 'ImageMessageHandler', 'VideoMessageHandler']
+__all__ = [
+    'AbstractMessageHandler',
+    'TextMessageHandler',
+    'InteractiveMessageHandler',
+    'ImageMessageHandler',
+    'VideoMessageHandler',
+    'WelcomeHandler'
+]

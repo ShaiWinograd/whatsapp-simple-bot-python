@@ -1,6 +1,6 @@
 from typing import Optional
 from .state_manager import StateManager
-from .label_manager import LabelManager
+from ..whatsapp.label_manager import LabelManager
 from ..business.flows.abstract_business_flow import AbstractBusinessFlow
 
 class BusinessFlowManager:
