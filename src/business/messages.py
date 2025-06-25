@@ -4,17 +4,12 @@ This module provides shared message templates, navigation options, and utility
 functions for creating consistent message structures across different flows.
 """
 from typing import Dict
+
+from src.config.responses.common import NAVIGATION
 from .flows.moving.messages.types import (
     ButtonMessage,
-    DetailsTemplate,
-    NavigationOptions
+    DetailsTemplate
 )
-
-# Standard navigation options
-NAVIGATION: NavigationOptions = {
-    'back_to_main': 'חזרה לתפריט הראשי',
-    'talk_to_representative': 'שיחה עם נציג/ה'
-}
 
 # Error messages
 ERROR_MESSAGES: Dict[str, str] = {

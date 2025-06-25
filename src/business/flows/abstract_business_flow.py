@@ -7,6 +7,7 @@ class AbstractBusinessFlow(ABC):
     def __init__(self):
         self._conversation_state: str = 'initial'
         self._flow_data: Dict[str, Any] = {}
+        self._recipient: Optional[str] = None
         
     @property
     def state(self) -> str:
@@ -57,6 +58,22 @@ class AbstractBusinessFlow(ABC):
             Optional[Any]: Stored value if exists, None otherwise
         """
         return self._flow_data.get(key)
+
+    def set_recipient(self, recipient: str) -> None:
+        """Set the recipient phone number for this flow
+
+        Args:
+            recipient (str): Recipient's phone number
+        """
+        self._recipient = recipient
+
+    def get_recipient(self) -> Optional[str]:
+        """Get the recipient's phone number
+
+        Returns:
+            Optional[str]: Recipient's phone number if set, None otherwise
+        """
+        return self._recipient
         
     @abstractmethod
     def handle_input(self, user_input: str) -> str:

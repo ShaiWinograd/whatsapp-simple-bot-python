@@ -5,11 +5,12 @@ from .welcome_handler import WelcomeHandler
 from ...utils.errors import ConversationError
 from ...whatsapp.utils.message_parser import get_button_title
 
+from ...config.responses.common import NAVIGATION, GENERAL
+
 # Mapping between Hebrew button titles and flow types
 FLOW_TYPE_MAPPING = {
     'מעבר דירה': 'moving',
     'סידור וארגון הבית': 'organization',
-    'אשמח לדבר עם נציג/ה': 'support',
     'אחר': 'support'
 }
 
@@ -29,7 +30,6 @@ class InteractiveMessageHandler(AbstractMessageHandler):
         """
         recipient = base_payload["to"]
         print("\nHandling interactive message...")
-        print("Full message:", message)
 
         # Check for existing conversation first for non-interactive messages
         if message.get('type') not in ['interactive', 'reply']:
@@ -46,10 +46,22 @@ class InteractiveMessageHandler(AbstractMessageHandler):
 
         print("Processing selected option:", selected_option)
 
-        # Handle special actions first
-        if selected_option == 'חזרה לתפריט הראשי':
+        # Handle navigation actions first
+        if selected_option == NAVIGATION['back_to_main']:
             print("User requested main menu")
             self._conversation_manager.remove_conversation(recipient)
+            return WelcomeHandler(self._conversation_manager, self._flow_factory).handle_welcome(recipient)
+            
+        if selected_option == NAVIGATION['talk_to_representative']:
+            print("User requested support")
+            try:
+                # Start support conversation
+                self._conversation_manager.start_conversation(recipient, 'support')
+                flow = self._conversation_manager.get_conversation(recipient)
+                if flow:
+                    return [self.create_flow_message(recipient, flow.get_next_message())]
+            except ConversationError:
+                pass
             return WelcomeHandler(self._conversation_manager, self._flow_factory).handle_welcome(recipient)
 
         # Try to handle the selected option as a flow type

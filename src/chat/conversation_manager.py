@@ -27,6 +27,8 @@ class ConversationManager:
         """
         flow = BusinessFlowFactory.create_flow(flow_type)
         if flow:
+            # Set the recipient for the flow
+            flow.set_recipient(user_id)
             self._label_manager.remove_all_labels(user_id)
             self._state_manager.set_state(user_id, flow)
             self._timeout_manager.update_activity(user_id)
@@ -90,6 +92,9 @@ class ConversationManager:
         """
         flow = self.get_conversation(user_id)
         if flow:
+            # Ensure recipient is set (in case it was lost)
+            if not flow.get_recipient():
+                flow.set_recipient(user_id)
             next_state = flow.handle_input(user_input)
             self.update_conversation_state(user_id, next_state)
             return flow.get_next_message()
