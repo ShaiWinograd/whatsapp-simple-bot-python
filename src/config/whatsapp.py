@@ -6,6 +6,9 @@ This module contains WhatsApp-specific configuration for the application includi
 """
 from typing import TypedDict
 import os
+from src.utils.logger import setup_logger
+
+logger = setup_logger(__name__)
 
 class WhatsAppLabels(TypedDict):
     """WhatsApp label type definitions."""
@@ -27,6 +30,11 @@ LABELS: WhatsAppLabels = {
 # Debug phone number from environment
 DEBUG_PHONE_NUMBER: str = os.getenv('DEBUG_PHONE_NUMBER', '')
 
+if DEBUG_PHONE_NUMBER:
+    logger.info("Debug mode enabled - Only processing messages from: %s", DEBUG_PHONE_NUMBER)
+else:
+    logger.warning("DEBUG_PHONE_NUMBER not set - Processing messages from all numbers")
+
 def is_debug_number(phone_number: str) -> bool:
     """Check if a phone number is the debug phone number.
     
@@ -34,10 +42,20 @@ def is_debug_number(phone_number: str) -> bool:
         phone_number: The phone number to check
         
     Returns:
-        True if number matches debug number when set
+        True if DEBUG_PHONE_NUMBER is not set, or if number matches DEBUG_PHONE_NUMBER
     """
     if not DEBUG_PHONE_NUMBER:
+        logger.warning("DEBUG_PHONE_NUMBER not set - allowing all numbers")
         return True
-    return phone_number == DEBUG_PHONE_NUMBER
+        
+    normalized_debug = DEBUG_PHONE_NUMBER.strip().replace("+", "")
+    normalized_phone = phone_number.strip().replace("+", "")
+    match = normalized_phone == normalized_debug
+    
+    if not match:
+        logger.debug("Number %s does not match debug number %s",
+                    phone_number, DEBUG_PHONE_NUMBER)
+    
+    return match
 
 __all__ = ['WhatsAppLabels', 'LABELS', 'DEBUG_PHONE_NUMBER', 'is_debug_number']

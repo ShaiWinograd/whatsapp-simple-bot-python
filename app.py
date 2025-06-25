@@ -45,9 +45,14 @@ def _handle_error(e, request_data):
     Returns:
         Tuple: (error_response, status_code)
     """
+    import traceback
     error_details = {
-        'error': str(e)
+        'error': str(e),
+        'trace': traceback.format_exc(),
+        'request_data': request_data
     }
+    app.logger.error("Error processing webhook: %s\nRequest data: %s\nTraceback: %s",
+                     str(e), request_data, traceback.format_exc())
     return jsonify(error_details), 500
 
 @app.route('/hook', methods=['POST'])
