@@ -57,21 +57,38 @@ class AbstractMessageHandler(ABC):
                 return [self.create_flow_message(recipient, next_message)]
         return None
 
-    def create_flow_message(self, recipient: str, message: str) -> Dict[str, Any]:
+    def create_flow_message(self, recipient: str, message: Any) -> Dict[str, Any]:
         """Create appropriate message type based on content
         
         Args:
             recipient (str): The recipient's phone number
-            message (str): Message content from flow
+            message: Message content from flow (can be str or dict)
             
         Returns:
             Dict[str, Any]: Message payload
         """
+        print("\n=== AbstractMessageHandler.create_flow_message() ===")
+        print(f"Recipient: {recipient}")
+        print(f"Message to format: {message}")
+        print(f"Message type: {type(message)}")
+
+        # If message is already a formatted payload, return it as is
+        if isinstance(message, dict) and 'messaging_product' in message:
+            print("Message is already a formatted payload, returning as is")
+            return message
+
         # If message contains button definitions, create interactive message
-        if "buttons" in message:
-            return MessagePayloadBuilder.create_interactive_message(recipient=recipient, **message)
+        if isinstance(message, dict) and "buttons" in message:
+            print("Creating interactive message from button template")
+            msg = MessagePayloadBuilder.create_interactive_message(recipient=recipient, **message)
+            print(f"Created interactive message: {msg}")
+            return msg
+
         # Otherwise create text message
-        return MessagePayloadBuilder.create_text_message(recipient=recipient, body_text=message)
+        print("Creating text message")
+        msg = MessagePayloadBuilder.create_text_message(recipient=recipient, body_text=str(message))
+        print(f"Created text message: {msg}")
+        return msg
 
     def create_interactive_message(
         self,

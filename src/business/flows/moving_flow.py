@@ -147,6 +147,11 @@ class MovingFlow(AbstractBusinessFlow):
     def get_next_message(self) -> str:
         """Get next message based on current state"""
         try:
+            print("\n=== MovingFlow.get_next_message() ===")
+            print(f"Current state: {self._conversation_state}")
+            print(f"Service type: {self._service_type}")
+            print(f"Recipient: {self._recipient}")
+
             if not self._recipient:
                 logger.error("Recipient not set for message creation")
                 return MessagePayloadBuilder.create_interactive_message(
@@ -155,8 +160,20 @@ class MovingFlow(AbstractBusinessFlow):
                 )
 
             def create_message_from_template(template, **kwargs):
-                buttons = [{"id": btn, "title": btn} for btn in template.get('buttons', [])] if 'buttons' in template else None
-                return MessagePayloadBuilder.create_interactive_message(
+                print("\n=== create_message_from_template() ===")
+                print(f"Template: {template}")
+                print(f"Additional kwargs: {kwargs}")
+                # Format buttons as WhatsApp quick_reply buttons
+                buttons = [
+                    {
+                        "type": "quick_reply",
+                        "id": str(idx),  # WhatsApp requires unique IDs
+                        "title": btn
+                    } 
+                    for idx, btn in enumerate(template.get('buttons', []))
+                ] if 'buttons' in template else None
+
+                message = MessagePayloadBuilder.create_interactive_message(
                     recipient=self._recipient,
                     body_text=template.get('body', ''),
                     header_text=template.get('header', ''),
@@ -164,9 +181,14 @@ class MovingFlow(AbstractBusinessFlow):
                     buttons=buttons,
                     **kwargs
                 )
+                print(f"Created message payload: {message}")
+                return message
 
             if self._conversation_state == 'initial':
-                return create_message_from_template(MOVING_RESPONSES['initial'])
+                print("\nCreating initial moving flow message")
+                msg = create_message_from_template(MOVING_RESPONSES['initial'])
+                print(f"Initial message payload: {msg}")
+                return msg
                 
             elif self._conversation_state == 'awaiting_packing_choice':
                 return create_message_from_template(DETAILS_COLLECTION[self._service_type])

@@ -33,30 +33,48 @@ class WhatsAppClient:
         Raises:
             ValueError: If required fields are missing
         """
+        print("\n=== WhatsAppClient.send_message() ===")
+        print(f"Incoming payload: {payload}")
+
         # Determine message type from payload structure
         message_type = 'text'
         if payload.get('type') == 'button':
             message_type = 'interactive'
+        print(f"Determined message type: {message_type}")
         
         if message_type == 'interactive':
+            print("Validating interactive message payload...")
             required_fields = ['messaging_product', 'to', 'type', 'body', 'action']
             if not all(key in payload for key in required_fields):
+                missing = [f for f in required_fields if f not in payload]
+                print(f"Missing required fields: {missing}")
                 raise ValueError(f"Interactive messages must have these fields: {', '.join(required_fields)}")
             
             if 'text' not in payload['body']:
+                print("Error: 'text' field missing in body")
                 raise ValueError("Interactive message body must have 'text' field")
                 
             if 'buttons' not in payload['action']:
+                print("Error: 'buttons' field missing in action")
                 raise ValueError("Interactive message action must have 'buttons' field")
+            
+            print("Interactive message validation passed")
         else:
+            print("Validating text message payload...")
             # For text messages, validate required fields
             required_fields = ['messaging_product', 'to', 'body']
             if not all(key in payload for key in required_fields):
+                missing = [f for f in required_fields if f not in payload]
+                print(f"Missing required fields: {missing}")
                 raise ValueError(f"Text messages must have these fields: {', '.join(required_fields)}")
             
             # For text messages, body must be a string
             if not isinstance(payload['body'], str):
+                print(f"Error: body is type {type(payload['body'])}, expected str")
+                print(f"Body content: {payload['body']}")
                 raise ValueError("Text message body must be a string")
+            
+            print("Text message validation passed")
             
         url = get_api_url(message_type)
         print(f"Sending {message_type} message to {url}")

@@ -29,7 +29,9 @@ class InteractiveMessageHandler(AbstractMessageHandler):
             List[Dict[str, Any]]: List of message payloads to send
         """
         recipient = base_payload["to"]
-        print("\nHandling interactive message...")
+        print("\n=== InteractiveMessageHandler.handle() ===")
+        print(f"Incoming message: {message}")
+        print(f"Base payload: {base_payload}")
 
         # Check for existing conversation first for non-interactive messages
         if message.get('type') not in ['interactive', 'reply']:
@@ -40,7 +42,8 @@ class InteractiveMessageHandler(AbstractMessageHandler):
 
         # Extract button selection
         selected_option = self._get_selected_option(message)
-        if not selected_option: 
+        print(f"\nExtracted selected option: {selected_option}")
+        if not selected_option:
             print("No button selection found in message")
             return WelcomeHandler(self._conversation_manager, self._flow_factory).handle_welcome(recipient)
 
@@ -67,6 +70,7 @@ class InteractiveMessageHandler(AbstractMessageHandler):
         # Try to handle the selected option as a flow type
         if selected_option in FLOW_TYPE_MAPPING:
             print(f"Found flow type mapping for: {selected_option}")
+            print(f"Mapped to flow type: {FLOW_TYPE_MAPPING[selected_option]}")
             try:
                 flow_type = FLOW_TYPE_MAPPING[selected_option]
                 
@@ -75,8 +79,13 @@ class InteractiveMessageHandler(AbstractMessageHandler):
                 
                 # Get the flow and its first message
                 flow = self._conversation_manager.get_conversation(recipient)
+                print(f"\nCreated flow: {flow.get_flow_name() if flow else None}")
                 if flow:
-                    return [self.create_flow_message(recipient, flow.get_next_message())]
+                    next_msg = flow.get_next_message()
+                    print(f"Flow's next message: {next_msg}")
+                    formatted_msg = self.create_flow_message(recipient, next_msg)
+                    print(f"Formatted flow message: {formatted_msg}")
+                    return [formatted_msg]
                     
                 print("Failed to create flow")
                 return [self.create_text_message(recipient, GENERAL['error'])]
